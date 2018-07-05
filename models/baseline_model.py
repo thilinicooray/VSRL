@@ -242,6 +242,8 @@ class baseline(nn.Module):
         #graph forward
         #adjacency matrix for fully connected undirected graph
         adj_matrix = torch.ones([self.encoder.get_max_role_count(), self.encoder.get_max_role_count()])
+        if torch.cuda.is_available():
+            adj_matrix = adj_matrix.to(torch.device('cuda'))
         role_predict = self.role_graph(role_init_embedding, adj_matrix)
         #print('role predict size :', role_predict.size())
 
