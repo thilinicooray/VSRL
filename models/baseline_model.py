@@ -231,6 +231,10 @@ class baseline(nn.Module):
         _, verb_id = torch.max(verb_predict, 1)
         verbs = self.encoder.get_verb_encoding(verb_id)
         roles = self.encoder.get_role_encoding(verb_id)
+
+        if torch.cuda.is_available():
+            verbs = verbs.to(torch.device('cuda'))
+            roles = roles.to(torch.device('cuda'))
         #expected size = 6 x embedding size
         role_init_embedding = self.role_graph_init_module([img_embedding, verbs, roles])
         #print('role init: ', role_init_embedding.size())
