@@ -7,7 +7,7 @@ from models import baseline_model
 import os
 from models import utils
 
-def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, encoder, gpu_mode, eval_frequency=1):
+def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, encoder, gpu_mode, eval_frequency=500):
     model.train()
     train_loss = 0
     total_steps = 0
@@ -72,7 +72,7 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
                 min_loss = min(dev_loss_list)
 
                 if min_loss == dev_loss_list[-1]:
-                    checkpoint_name = os.path.join(model_dir, '{}_devloss_{}.h5'.format('baseline', min_loss))
+                    checkpoint_name = os.path.join(model_dir, '{}_devloss_{}.h5'.format('baseline', len(dev_loss_list)))
                     utils.save_net(checkpoint_name, model)
                     print ('New best model saved! {0}'.format(min_loss))
 
@@ -116,20 +116,21 @@ def main():
 
     args = parser.parse_args()
 
-    train_set = json.load(open("imsitu_data/train.json"))
+    train_set = json.load(open("imSitu/train.json"))
     encoder = imsitu_encoder(train_set)
 
-    train_set = imsitu_loader('of500_images_resized', train_set, encoder)
+    train_set = imsitu_loader('resized_256', train_set, encoder)
 
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=64, shuffle=True, num_workers=1)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=64, shuffle=True, num_workers=3)
 
-    dev_set = json.load(open("imsitu_data/dev.json"))
-    dev_set = imsitu_loader('of500_images_resized', dev_set, encoder)
-    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=64, shuffle=True, num_workers=1)
+    dev_set = json.load(open("imSitu/dev.json"))
+    dev_set = imsitu_loader('resized_256', dev_set, encoder)
+    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=64, shuffle=True, num_workers=3)
 
     model = baseline_model.baseline(encoder)
 
     if args.gpuid >= 0:
+        #print('GPU enabled')
         model.cuda()
 
     #lr, weight decay user param
@@ -137,7 +138,7 @@ def main():
     #gradient clipping, grad check
 
     print('Model training started!')
-    train(model, train_loader, dev_loader, optimizer,1, 'trained_models', encoder, args.gpuid)
+    train(model, train_loader, dev_loader, optimizer,10, 'trained_models', encoder, args.gpuid)
 
 
 

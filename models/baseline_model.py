@@ -149,7 +149,6 @@ class parallel_table(nn.Module):
 
     def forward(self,x):
         #todo: what is the proper way to make batchx1024 -> batchx6x2014
-        print('CHECK CUDA:', next(self.role_lookup_table.parameters()).is_cuda)
         out3 = self.role_lookup_table(x[2])
         out_size = out3.size()[1]
         out1 = torch.unsqueeze(self.img_embedding_layer(x[0]).repeat(1,out_size),1)

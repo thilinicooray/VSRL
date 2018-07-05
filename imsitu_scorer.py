@@ -45,7 +45,7 @@ class imsitu_scorer():
             if verb_found: score_card["verb"] += 1
 
             gt_role_count = self.encoder.get_role_count(gt_v)
-            score_card["n_value"] += len(gt_role_count)
+            score_card["n_value"] += gt_role_count
 
             all_found = True
 
