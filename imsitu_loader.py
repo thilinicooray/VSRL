@@ -17,6 +17,8 @@ class imsitu_loader(data.Dataset):
         tv.transforms.RandomHorizontalFlip(),
         '''
         self.transform = transforms.Compose([
+            transforms.Resize(224),
+            transforms.CenterCrop(224),
             transforms.ToTensor(),
             normalize
         ])
@@ -27,9 +29,9 @@ class imsitu_loader(data.Dataset):
         img = Image.open(os.path.join(self.img_dir, _id)).convert('RGB')
         #transform must be None in order to give it as a tensor
         if self.transform is not None: img = self.transform(img)
-        verb, roles, labels = self.encoder.encode(ann)
+        verb, labels = self.encoder.encode(ann)
 
-        return img, verb, roles, labels
+        return img, verb, labels
 
     def __len__(self):
         return len(self.annotations)

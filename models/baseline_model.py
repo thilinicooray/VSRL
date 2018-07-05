@@ -1,8 +1,29 @@
+import torch
 import torch.nn as nn
 import torchvision as tv
-from utils import initLinear
+from . import utils, pygcn
+from .pygcn import gcn
 
-from pygcn import models
+
+class resnet152_pretrained(nn.Module):
+    def __init__(self, embed_size=1024):
+        """Load the pretrained ResNet-152 and replace top fc layer."""
+        super(resnet152_pretrained, self).__init__()
+        resnet = tv.models.resnet152(pretrained=True)
+        modules = list(resnet.children())[:-1]      # delete the last fc layer.
+        self.resnet = nn.Sequential(*modules)
+        self.linear = nn.Linear(resnet.fc.in_features, embed_size)
+        self.bn = nn.BatchNorm1d(embed_size, momentum=0.01)
+
+    def forward(self, images):
+        """Extract feature vectors from input images."""
+        with torch.no_grad():
+            features = self.resnet(images)
+        features = features.reshape(features.size(0), -1)
+        features = self.bn(self.linear(features))
+        return features
+
+    def rep_size(self): return 1024
 
 class vgg_modified(nn.Module):
     def __init__(self):
@@ -18,13 +39,13 @@ class vgg_modified(nn.Module):
         self.relu2 = nn.ReLU(True)
         self.dropout2 = nn.Dropout()
 
-        initLinear(self.lin1)
-        initLinear(self.lin2)
+        utils.init_weight(self.lin1)
+        utils.init_weight(self.lin2)
 
     def rep_size(self): return 1024
 
     def forward(self,x):
-        return self.dropout2(self.relu2(self.lin2(self.dropout1(self.relu1(self.lin1(self.vgg_features(x).view(-1, 512*7*7)))))))
+        return self.dropout2(self.relu2(self.lin2(self.dropout1(self.relu1(self.lin1(self.vgg_features(x)))))))
 
 class resnet_modified_large(nn.Module):
     def __init__(self):
@@ -35,7 +56,7 @@ class resnet_modified_large(nn.Module):
         self.dropout2d = nn.Dropout2d(.5)
         self.dropout = nn.Dropout(.5)
         self.relu = nn.LeakyReLU()
-        initLinear(self.linear)
+        utils.init_weight(self.linear)
 
     def base_size(self): return 2048
     def rep_size(self): return 1024
@@ -65,7 +86,7 @@ class resnet_modified_medium(nn.Module):
         self.dropout2d = nn.Dropout2d(.5)
         self.dropout = nn.Dropout(.5)
         self.relu = nn.LeakyReLU()
-        initLinear(self.linear)
+        utils.init_weight(self.linear)
 
     def base_size(self): return 2048
     def rep_size(self): return 1024
@@ -96,7 +117,7 @@ class resnet_modified_small(nn.Module):
         self.dropout2d = nn.Dropout2d(.5)
         self.dropout = nn.Dropout(.5)
         self.relu = nn.LeakyReLU()
-        initLinear(self.linear)
+        utils.init_weight(self.linear)
 
     def base_size(self): return 512
     def rep_size(self): return 1024
@@ -124,22 +145,32 @@ class parallel_table(nn.Module):
         self.mod3 = mod3
 
     def forward(self,x):
-        y = [self.mod1(x[0]), self.mod2(x[1]), self.mod3(x[2])]
+        #todo: what is the proper way to make batchx1024 -> batchx6x2014
+
+        out3 = self.mod3(x[2])
+        out_size = out3.size()[1]
+        out1 = torch.unsqueeze(self.mod1(x[0]).repeat(1,out_size),1)
+        out1 = out1.view(out3.size())
+        out2 = torch.unsqueeze(self.mod2(x[1]).repeat(1,out_size),1)
+        out2 = out2.view(out3.size())
+        y = [out1, out2,out3 ]
         return y
 
 class mul_table(nn.Module):
     def __init__(self):
         super(mul_table, self).__init__()
 
-    def forward(self, x1, x2, x3):
-        x_mul = x1 * x2 * x3
+    def forward(self, x1):
+        x_mul = x1[0] * x1[1] * x1[2]
         return x_mul
 
 class baseline(nn.Module):
-    def __init__(self, encoder, cnn_type = 'vgg_net'):
+    def __init__(self, encoder, cnn_type='resnet_34'):
+        super(baseline, self).__init__()
+        self.encoder = encoder
 
         #get the CNN
-        if cnn_type == 'vgg_net' : self.cnn = vgg_modified()
+        if cnn_type == 'resnet152' : self.cnn = resnet152_pretrained()
         elif cnn_type == 'resnet_101' : self.cnn = resnet_modified_large()
         elif cnn_type == 'resnet_50': self.cnn = resnet_modified_medium()
         elif cnn_type == 'resnet_34': self.cnn = resnet_modified_small()
@@ -148,54 +179,89 @@ class baseline(nn.Module):
             exit()
         self.img_size = self.cnn.rep_size()
 
-        self.max_node_count = encoder.get_max_role_count()
-        self.num_verbs = encoder.get_num_verbs()
-        self.num_roles = encoder.get_num_roles()
-        self.vocab_size = 2000 #how to decide this?
+        self.max_node_count = self.encoder.get_max_role_count()
+        self.num_verbs = self.encoder.get_num_verbs()
+        self.num_roles = self.encoder.get_num_roles()
+        self.vocab_size = self.encoder.get_num_labels() #how to decide this?
         self.embedding_size = 1024 #user argument
 
-        self.verb_embedding_module = nn.Sequential(
-                                        nn.Linear(self.img_size, self.embedding_size),
-                                        nn.ReLU()
-                                    )
-        self.img_embedding_module = nn.Sequential(
-                                        nn.Linear(self.img_size, self.embedding_size)
-                                    )
-        #for embeddings, check without nn.sequential as well
-        self.verb_lookup_table = nn.Sequential(
-                                    nn.Embedding(self.num_verbs, self.embedding_size)
-                                )
-        self.role_lookup_table = nn.Sequential(
-                                    nn.Embedding(self.num_roles + 1, self.embedding_size)
-                                )
-        self.parallel = parallel_table(self.img_embedding_module, self.verb_lookup_table, self.role_lookup_table)
-        self.role_embedding_module = nn.Sequential(
+        self.verb_module = nn.Sequential(
+            nn.Linear(self.img_size, self.embedding_size),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(self.embedding_size, self.num_verbs),
+            nn.LogSoftmax()
+        )
+
+        self.verb_module.apply(utils.init_weight)
+
+        self.verb_lookup_table = nn.Linear(self.num_verbs, self.embedding_size)
+        #org code has size num_role + 1 x embedding
+        #how to use embeddings here? what is the gain?
+        self.role_lookup_table = nn.Linear(self.num_roles, self.embedding_size)
+        self.img_embedding_layer = nn.Linear(self.img_size, self.embedding_size)
+
+        self.parallel = parallel_table(self.img_embedding_layer, self.verb_lookup_table, self.role_lookup_table)
+        self.role_graph_init_module = nn.Sequential(
                                         self.parallel,
                                         mul_table(),
                                         nn.ReLU()
                                     )
-
-        self.verb_output = nn.Sequential(
-                            nn.Dropout(0.5),
-                            nn.Linear(self.embedding_size, self.num_verbs),
-                            nn.LogSoftmax()
-                        )
+        self.role_graph_init_module.apply(utils.init_weight)
 
         #nhid and dropout, user arg
         #in GCN, they don't define #of nodes in init. they pass an adj matrix in forward.
-        self.graph = models.GCN(
+        self.role_graph = gcn.GCN(
                             nfeat=self.embedding_size,
                             nhid=1024,
                             nclass=self.vocab_size,
                             dropout=0.5
                         )
-        self.role_output = nn.Sequential(
-            self.graph
-        )
+
 
         '''
         todo: make them all .cuda() to run in GPU mode
         '''
+    def forward(self, images):
+        #print('input size', images.size())
+        img_embedding = self.cnn(images)
+        #print('cnn out size', img_embedding.size())
+        verb_predict = self.verb_module(img_embedding)
+        #print('verb module out ', verb_predict.size())
+        #get argmax(verb is) from verb predict
+        _, verb_id = torch.max(verb_predict, 1)
+        verbs = self.encoder.get_verb_encoding(verb_id)
+        roles = self.encoder.get_role_encoding(verb_id)
+        #expected size = 6 x embedding size
+        role_init_embedding = self.role_graph_init_module([img_embedding, verbs, roles])
+        #print('role init: ', role_init_embedding.size())
 
-        #init weights ....
-        #check model code again. can remove sequential i think
+        #graph forward
+        #adjacency matrix for fully connected undirected graph
+        adj_matrix = torch.ones([self.encoder.get_max_role_count(), self.encoder.get_max_role_count()])
+        role_predict = self.role_graph(role_init_embedding, adj_matrix)
+        #print('role predict size :', role_predict.size())
+
+        return verb_predict, role_predict
+
+    def calculate_loss(self, verb_pred, roles_pred, gt_verbs, gt_labels):
+        #as per paper, loss is sum(i) sum(3) (cross_entropy(verb) + 1/6sum(all roles)cross_entropy(label)
+
+        criterion = nn.CrossEntropyLoss()
+
+        verb_loss = criterion(verb_pred, torch.max(gt_verbs,1)[1])
+        #print('verb loss :', verb_loss)
+        #this is a multi label classification problem
+        batch_size = verb_pred.size()[0]
+        loss = verb_loss
+        for i in range(batch_size):
+            for index in range(gt_labels.size()[1]):
+                sub_loss = criterion(roles_pred[i], torch.max(gt_labels[i,index,:,:],1)[1])
+                #print('sub loss :', sub_loss)
+                loss += sub_loss/roles_pred.size()[1]
+
+        final_loss = loss/batch_size
+
+
+        return final_loss
+

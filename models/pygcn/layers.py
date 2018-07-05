@@ -2,12 +2,14 @@
 Copyright https://github.com/tkipf/pygcn
 '''
 
+
 import math
 
 import torch
 
 from torch.nn.parameter import Parameter
 from torch.nn.modules.module import Module
+from .. import utils
 
 
 class GraphConvolution(Module):
@@ -26,19 +28,28 @@ class GraphConvolution(Module):
             self.register_parameter('bias', None)
         self.reset_parameters()
 
-    def reset_parameters(self):
-        stdv = 1. / math.sqrt(self.weight.size(1))
-        self.weight.data.uniform_(-stdv, stdv)
-        if self.bias is not None:
-            self.bias.data.uniform_(-stdv, stdv)
-
-    def forward(self, input, adj):
-        support = torch.mm(input, self.weight)
-        output = torch.spmm(adj, support)
-        if self.bias is not None:
-            return output + self.bias
+    def reset_parameters(self, val=None):
+        if val is None:
+            fan = self.in_features +  self.out_features
+            spread = math.sqrt(2.0) * math.sqrt( 2.0 / fan )
         else:
-            return output
+            spread = val
+        self.weight.data.uniform_(-spread,spread)
+        if self.bias is not None:
+            self.bias.data.uniform_(-spread,spread)
+
+
+    def forward(self, input_graph, adj):
+        out_graphs = []
+        #todo: how to handle more efficiently
+        for graph in input_graph:
+            support = torch.mm(graph, self.weight)
+            output = torch.spmm(adj, support)
+            if self.bias is not None:
+                out_graphs.append(output + self.bias)
+            else:
+                out_graphs.append(output)
+        return torch.stack(out_graphs)
 
     def __repr__(self):
         return self.__class__.__name__ + ' (' \
