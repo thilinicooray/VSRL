@@ -23,11 +23,11 @@ class imsitu_scorer():
             gt_verb = gt_verbs[i]
             label_pred = labels_predict[i]
             gt_label = gt_labels[i]
-            print('check sizes:', verb_pred.size(), gt_verb.size(), label_pred.size(), gt_label.size())
+            #print('check sizes:', verb_pred.size(), gt_verb.size(), label_pred.size(), gt_label.size())
             sorted_idx = torch.sort(verb_pred, 0, True)[1]
 
             gt_v = torch.max(gt_verb, 0)[1]
-            print('groud truth verb id:', gt_v)
+            #print('groud truth verb id:', gt_v)
 
             if image_names is not None: _image = image_names[i]
 
@@ -50,11 +50,11 @@ class imsitu_scorer():
 
             for k in range(gt_role_count):
                 label_id = torch.max(label_pred[k],0)[1]
-                print('predicted label id', label_id)
+                #print('predicted label id', label_id)
                 found = False
                 for r in range(0,self.nref):
                     gt_label_id = torch.max(gt_label[r][k], 0)[1]
-                    print('ground truth label id = ', gt_label_id)
+                    #print('ground truth label id = ', gt_label_id)
                     if label_id == gt_label_id:
                         found = True
                         break
