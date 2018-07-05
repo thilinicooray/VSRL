@@ -138,20 +138,23 @@ class resnet_modified_small(nn.Module):
         return self.dropout(self.relu(self.linear(x.view(-1, 7*7*self.base_size()))))
 
 class parallel_table(nn.Module):
-    def __init__(self, mod1, mod2, mod3):
+    def __init__(self, img_size, embedding_size, num_verbs, num_roles):
         super(parallel_table,self).__init__()
-        self.mod1 = mod1
-        self.mod2 = mod2
-        self.mod3 = mod3
+        self.img_embedding_layer = nn.Linear(img_size, embedding_size)
+        self.verb_lookup_table = nn.Linear(num_verbs, embedding_size)
+        #org code has size num_role + 1 x embedding
+        #how to use embeddings here? what is the gain?
+        self.role_lookup_table = nn.Linear(num_roles, embedding_size)
+
 
     def forward(self,x):
         #todo: what is the proper way to make batchx1024 -> batchx6x2014
 
-        out3 = self.mod3(x[2])
+        out3 = self.role_lookup_table(x[2])
         out_size = out3.size()[1]
-        out1 = torch.unsqueeze(self.mod1(x[0]).repeat(1,out_size),1)
+        out1 = torch.unsqueeze(self.img_embedding_layer(x[0]).repeat(1,out_size),1)
         out1 = out1.view(out3.size())
-        out2 = torch.unsqueeze(self.mod2(x[1]).repeat(1,out_size),1)
+        out2 = torch.unsqueeze(self.verb_lookup_table(x[1]).repeat(1,out_size),1)
         out2 = out2.view(out3.size())
         y = [out1, out2,out3 ]
         return y
@@ -195,13 +198,9 @@ class baseline(nn.Module):
 
         self.verb_module.apply(utils.init_weight)
 
-        self.verb_lookup_table = nn.Linear(self.num_verbs, self.embedding_size)
-        #org code has size num_role + 1 x embedding
-        #how to use embeddings here? what is the gain?
-        self.role_lookup_table = nn.Linear(self.num_roles, self.embedding_size)
-        self.img_embedding_layer = nn.Linear(self.img_size, self.embedding_size)
 
-        self.parallel = parallel_table(self.img_embedding_layer, self.verb_lookup_table, self.role_lookup_table)
+
+        self.parallel = parallel_table(self.img_size, self.embedding_size, self.num_verbs, self.num_roles)
         self.role_graph_init_module = nn.Sequential(
                                         self.parallel,
                                         mul_table(),

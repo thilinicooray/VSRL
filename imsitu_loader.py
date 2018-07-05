@@ -17,7 +17,7 @@ class imsitu_loader(data.Dataset):
         tv.transforms.RandomHorizontalFlip(),
         '''
         self.transform = transforms.Compose([
-            transforms.Resize(224),
+            transforms.Scale(224),
             transforms.CenterCrop(224),
             transforms.ToTensor(),
             normalize
