@@ -106,7 +106,7 @@ class imsitu_encoder():
 
         #print('item encoding size : v r l', verb.size(), roles.size(), labels.size())
         #assuming labels are also in order of roles in encoder
-        return verb, labels
+        return verb, roles, labels
 
     def save_encoder(self):
         return None
