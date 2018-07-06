@@ -133,7 +133,7 @@ def main():
     dev_set = imsitu_loader('resized_256', dev_set, encoder)
     dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=64, shuffle=True, num_workers=3)
 
-    model = baseline_model.baseline(encoder)
+    model = baseline_model.baseline(encoder, args.gpuid)
 
     if args.gpuid >= 0:
         #print('GPU enabled')

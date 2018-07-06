@@ -167,9 +167,10 @@ class mul_table(nn.Module):
         return x_mul
 
 class baseline(nn.Module):
-    def __init__(self, encoder, cnn_type='resnet_34'):
+    def __init__(self, encoder, gpu_mode,cnn_type='resnet_34'):
         super(baseline, self).__init__()
         self.encoder = encoder
+        self.gpu_mode = gpu_mode
 
         #get the CNN
         if cnn_type == 'resnet152' : self.cnn = resnet152_pretrained()
@@ -231,7 +232,8 @@ class baseline(nn.Module):
         verbs = self.encoder.get_verb_encoding(verb_id)
         roles = self.encoder.get_role_encoding(verb_id)
 
-        if torch.cuda.is_available():
+        if self.gpu_mode >= 0: 
+            #if torch.cuda.is_available():
             verbs = verbs.to(torch.device('cuda'))
             roles = roles.to(torch.device('cuda'))'''
         #expected size = 6 x embedding size
@@ -241,7 +243,7 @@ class baseline(nn.Module):
         #graph forward
         #adjacency matrix for fully connected undirected graph
         adj_matrix = torch.ones([self.encoder.get_max_role_count(), self.encoder.get_max_role_count()])
-        if torch.cuda.is_available():
+        if self.gpu_mode >= 0:
             adj_matrix = adj_matrix.to(torch.device('cuda'))
         role_predict = self.role_graph(role_init_embedding, adj_matrix)
         #print('role predict size :', role_predict.size())
