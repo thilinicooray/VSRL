@@ -184,7 +184,7 @@ class baseline(nn.Module):
         self.max_node_count = self.encoder.get_max_role_count()
         self.num_verbs = self.encoder.get_num_verbs()
         self.num_roles = self.encoder.get_num_roles()
-        self.vocab_size = self.encoder.get_num_labels() #how to decide this?
+        self.vocab_size = self.encoder.get_num_labels() #todo:how to decide this? original has 2000 only
         self.embedding_size = 1024 #user argument
 
         self.verb_module = nn.Sequential(
@@ -217,9 +217,6 @@ class baseline(nn.Module):
                         )
 
 
-        '''
-        todo: make them all .cuda() to run in GPU mode
-        '''
     def forward(self, images):
         #print('input size', images.size())
         img_embedding = self.cnn(images)

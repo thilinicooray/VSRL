@@ -38,7 +38,7 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
             verb_predict, labels_predict = model(img)
 
             loss = model.calculate_loss(verb_predict, labels_predict, verb, labels)
-            print('current batch loss = ', loss.data)
+            #print('current batch loss = ', loss.data)
 
             optimizer.zero_grad()
             loss.backward()
@@ -78,6 +78,8 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
 
                 print('current train loss', train_loss)
                 train_loss = 0
+
+        print('Epoch ', epoch, ' completed!')
 
 def eval(model, dev_loader, encoder, gpu_mode):
     model.eval()
@@ -138,7 +140,7 @@ def main():
     #gradient clipping, grad check
 
     print('Model training started!')
-    train(model, train_loader, dev_loader, optimizer,10, 'trained_models', encoder, args.gpuid)
+    train(model, train_loader, dev_loader, optimizer,50, 'trained_models', encoder, args.gpuid)
 
 
 
