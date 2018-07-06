@@ -13,6 +13,7 @@ class imsitu_encoder():
         self.max_label_count = 3
         self.verb2_role_dict = {}
         self.label_list = ['#UNK#']
+        label_frequency = {}
         self.max_role_count = 0
 
         for img_id in train_set:
@@ -31,7 +32,13 @@ class imsitu_encoder():
                     if len(self.verb2_role_dict[current_verb]) > self.max_role_count:
                         self.max_role_count = len(self.verb2_role_dict[current_verb])
                     if label not in self.label_list:
-                        self.label_list.append(label)
+                        if label not in label_frequency:
+                            label_frequency[label] = 1
+                        else:
+                            label_frequency[label] += 1
+                        #only labels occur at least 5 times are considered
+                        if label_frequency[label] == 5:
+                            self.label_list.append(label)
 
         print('train set stats: \n\t verb count:', len(self.verb_list), '\n\t role count:',len(self.role_list),
               '\n\t label count:', len(self.label_list) ,
@@ -88,7 +95,7 @@ class imsitu_encoder():
                 if label in self.label_list:
                     label_embedding = self.label_embedding[self.label_list.index(label)]
                 else:
-                    label_embedding = self.label_embedding[0]
+                    label_embedding = self.label_embedding[self.label_list.index('#UNK#')]
 
                 label_embedding_list.append(label_embedding)
 
