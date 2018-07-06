@@ -23,19 +23,21 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
     for epoch in range(max_epoch):
         #print('current sample : ', i, img.size(), verb.size(), roles.size(), labels.size())
         #sizes batch_size*3*height*width, batch*504*1, batch*6*190*1, batch*3*6*lebale_count*1
-        for i, (img, verb, labels) in enumerate(train_loader):
+        for i, (img, verb, roles,labels) in enumerate(train_loader):
             total_steps += 1
 
             if gpu_mode >= 0:
                 img = torch.autograd.Variable(img.cuda())
+                roles = torch.autograd.Variable(roles.cuda())
                 verb = torch.autograd.Variable(verb.cuda())
                 labels = torch.autograd.Variable(labels.cuda())
             else:
                 img = torch.autograd.Variable(img)
                 verb = torch.autograd.Variable(verb)
+                roles = torch.autograd.Variable(roles)
                 labels = torch.autograd.Variable(labels)
 
-            verb_predict, labels_predict = model(img)
+            verb_predict, labels_predict = model(img, verb, roles)
 
             loss = model.calculate_loss(verb_predict, labels_predict, verb, labels)
             #print('current batch loss = ', loss.data)
@@ -89,18 +91,20 @@ def eval(model, dev_loader, encoder, gpu_mode):
     top1 = imsitu_scorer(encoder, 1, 3)
     top5 = imsitu_scorer(encoder, 5, 3)
 
-    for i, (img, verb, labels) in enumerate(dev_loader):
+    for i, (img, verb, roles, labels) in enumerate(dev_loader):
 
         if gpu_mode >= 0:
             img = torch.autograd.Variable(img.cuda())
             verb = torch.autograd.Variable(verb.cuda())
+            roles = torch.autograd.Variable(roles.cuda())
             labels = torch.autograd.Variable(labels.cuda())
         else:
             img = torch.autograd.Variable(img)
             verb = torch.autograd.Variable(verb)
+            roles = torch.autograd.Variable(roles)
             labels = torch.autograd.Variable(labels)
         #todo: implement beam search for eval mode
-        verb_predict, labels_predict = model(img)
+        verb_predict, labels_predict = model(img, verb, roles)
 
         loss = model.calculate_loss(verb_predict, labels_predict, verb, labels)
         dev_loss += loss.data

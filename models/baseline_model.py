@@ -217,20 +217,23 @@ class baseline(nn.Module):
                         )
 
 
-    def forward(self, images):
+    def forward(self, images, verbs, roles):
         #print('input size', images.size())
         img_embedding = self.cnn(images)
         #print('cnn out size', img_embedding.size())
         verb_predict = self.verb_module(img_embedding)
         #print('verb module out ', verb_predict.size())
         #get argmax(verb is) from verb predict
+        #todo: check which is the most correct way
+        '''
+        original code use gold verbs to insert to role predict module
         _, verb_id = torch.max(verb_predict, 1)
         verbs = self.encoder.get_verb_encoding(verb_id)
         roles = self.encoder.get_role_encoding(verb_id)
 
         if torch.cuda.is_available():
             verbs = verbs.to(torch.device('cuda'))
-            roles = roles.to(torch.device('cuda'))
+            roles = roles.to(torch.device('cuda'))'''
         #expected size = 6 x embedding size
         role_init_embedding = self.role_graph_init_module([img_embedding, verbs, roles])
         #print('role init: ', role_init_embedding.size())
