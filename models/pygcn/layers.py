@@ -39,17 +39,14 @@ class GraphConvolution(Module):
             self.bias.data.uniform_(-spread,spread)
 
 
-    def forward(self, input_graph, adj):
-        out_graphs = []
-        #todo: how to handle more efficiently
-        for graph in input_graph:
-            support = torch.mm(graph, self.weight)
-            output = torch.spmm(adj, support)
-            if self.bias is not None:
-                out_graphs.append(output + self.bias)
-            else:
-                out_graphs.append(output)
-        return torch.stack(out_graphs)
+    def forward(self, input, adj):
+        support = torch.bmm(input, self.weight.expand(input.size(0),self.in_features,self.out_features))
+        output = torch.bmm(adj, support)
+        if self.bias is not None:
+            return output + self.bias
+        else:
+            return output
+
 
     def __repr__(self):
         return self.__class__.__name__ + ' (' \

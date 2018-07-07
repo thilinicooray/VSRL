@@ -242,10 +242,13 @@ class baseline(nn.Module):
 
         #graph forward
         #adjacency matrix for fully connected undirected graph
-        adj_matrix = torch.ones([self.encoder.get_max_role_count(), self.encoder.get_max_role_count()])
+        #set only available roles to 1. every verb doesn't have 6 roles.
+
+        full_adj_matrix = torch.zeros([verbs.size()[0], self.encoder.get_max_role_count(), self.encoder.get_max_role_count()])
+        adj_matrx = self.encoder.get_adj_matrix(verbs)
         if self.gpu_mode >= 0:
-            adj_matrix = adj_matrix.to(torch.device('cuda'))
-        role_predict = self.role_graph(role_init_embedding, adj_matrix)
+            adj_matrx = full_adj_matrix.to(torch.device('cuda'))
+        role_predict = self.role_graph(role_init_embedding, adj_matrx)
         #print('role predict size :', role_predict.size())
 
         return verb_predict, role_predict
