@@ -188,14 +188,15 @@ class baseline(nn.Module):
         self.vocab_size = self.encoder.get_num_labels() #todo:how to decide this? original has 2000 only
         self.embedding_size = 1024 #user argument
 
-        self.verb_module = nn.Sequential(
+        '''self.verb_module = nn.Sequential(
             nn.Linear(self.img_size, self.embedding_size),
             nn.ReLU(),
             nn.Dropout(0.5),
             nn.Linear(self.embedding_size, self.num_verbs),
             nn.LogSoftmax()
-        )
+        )'''
 
+        self.verb_module = nn.Linear(self.img_size, self.num_verbs)
         self.verb_module.apply(utils.init_weight)
 
 
