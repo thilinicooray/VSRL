@@ -156,15 +156,12 @@ class imsitu_encoder():
 
     def get_adj_matrix(self, verb_encoding):
         verb_ids = torch.max(verb_encoding, 1)[1]
-        print('batch verb ids:', verb_ids)
-
         adj_matrix_list = []
 
         for id in verb_ids:
             adj = torch.zeros([self.max_role_count, self.max_role_count])
             actual_verb_count = self.get_role_count(id)
             adj[:actual_verb_count, : actual_verb_count] = 1
-            print(adj)
             adj_matrix_list.append(adj)
 
         return torch.stack(adj_matrix_list)
