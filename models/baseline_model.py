@@ -191,7 +191,6 @@ class baseline(nn.Module):
         self.verb_module = nn.Sequential(
             nn.Linear(self.img_size, self.embedding_size),
             nn.ReLU(),
-            nn.Dropout(0.5),
             nn.Linear(self.embedding_size, self.num_verbs),
         )
 
@@ -256,6 +255,14 @@ class baseline(nn.Module):
         #return verb_predict
 
     def calculate_loss(self, verb_pred, gt_verbs, roles_pred, gt_labels):
+        '''
+
+        :param verb_pred: write sizes
+        :param gt_verbs:
+        :param roles_pred:
+        :param gt_labels:
+        :return:
+        '''
         #as per paper, loss is sum(i) sum(3) (cross_entropy(verb) + 1/6sum(all roles)cross_entropy(label)
 
         criterion = nn.CrossEntropyLoss()
@@ -267,9 +274,11 @@ class baseline(nn.Module):
         batch_size = verb_pred.size()[0]
         loss = 0
         for i in range(batch_size):
+            sub_loss = 0
             for index in range(gt_labels.size()[1]):
-                sub_loss = criterion(roles_pred[i], torch.max(gt_labels[i,index,:,:],1)[1])
-                loss += sub_loss
+                sub_loss += criterion(roles_pred[i], torch.max(gt_labels[i,index,:,:],1)[1])
+            loss += sub_loss / gt_labels.size()[1]
+
 
         final_loss = verb_loss + loss/batch_size
 
