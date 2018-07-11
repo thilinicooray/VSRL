@@ -277,7 +277,7 @@ class baseline(nn.Module):
             sub_loss = 0
             for index in range(gt_labels.size()[1]):
                 sub_loss += criterion(roles_pred[i], torch.max(gt_labels[i,index,:,:],1)[1])
-            loss += sub_loss / gt_labels.size()[1]
+            loss += sub_loss
 
 
         final_loss = verb_loss + loss/batch_size

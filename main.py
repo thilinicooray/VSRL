@@ -11,7 +11,11 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
     model.train()
     train_loss = 0
     total_steps = 0
+    print_freq = 50
     dev_loss_list = []
+
+    top1 = imsitu_scorer(encoder, 1, 3)
+    top5 = imsitu_scorer(encoder, 5, 3)
 
     '''print('init param data check :')
     for f in model.parameters():
@@ -54,6 +58,19 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
                 print(f.grad)'''
 
             train_loss += loss.data
+
+            top1.add_point(verb_predict, verb, role_predict, labels)
+            top5.add_point(verb_predict, verb, role_predict, labels)
+
+
+            if total_steps % print_freq == 0:
+                top1_a = top1.get_average_results()
+                top5_a = top5.get_average_results()
+                print ("{},{},{}, {} , {}, loss = {:.2f}, avg loss = {:.2f}"
+                       .format(total_steps-1,epoch,i, utils.format_dict(top1_a, "{:.2f}", "1-"),
+                               utils.format_dict(top5_a,"{:.2f}","5-"), loss.data[0],
+                               train_loss / ((total_steps-1)%eval_frequency) ))
+
 
             if total_steps % eval_frequency == 0:
                 top1, top5, dev_loss = eval(model, dev_loader, encoder, gpu_mode)
