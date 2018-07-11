@@ -140,7 +140,7 @@ def main():
         model.cuda()
 
     #lr, weight decay user param
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-5, weight_decay=5e-4)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=0.85)
     #gradient clipping, grad check
 
     print('Model training started!')
