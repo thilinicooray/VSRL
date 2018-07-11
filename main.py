@@ -90,9 +90,9 @@ def eval(model, dev_loader, encoder, gpu_mode):
     print ('evaluating model...')
     top1 = imsitu_scorer(encoder, 1, 3)
     top5 = imsitu_scorer(encoder, 5, 3)
-
+    mx = len(dev_loader)
     for i, (img, verb, roles, labels) in enumerate(dev_loader):
-
+        print("{}/{} batches\r".format(i+1,mx)) ,
         if gpu_mode >= 0:
             img = torch.autograd.Variable(img.cuda())
             verb = torch.autograd.Variable(verb.cuda())
