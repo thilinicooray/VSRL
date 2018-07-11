@@ -246,7 +246,9 @@ class baseline(nn.Module):
 
         adj_matrx = self.encoder.get_adj_matrix(verbs)
         if self.gpu_mode >= 0:
-            adj_matrx = adj_matrx.to(torch.device('cuda'))
+            adj_matrx = torch.autograd.Variable(adj_matrx.cuda())
+        else:
+            adj_matrx = torch.autograd.Variable(adj_matrx)
         role_predict = self.role_graph(role_init_embedding, adj_matrx)
         #print('role predict size :', role_predict.size())
 
