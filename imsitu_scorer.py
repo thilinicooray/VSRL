@@ -13,7 +13,7 @@ class imsitu_scorer():
     def clear(self):
         self.score_cards = {}
 
-    def add_point(self, verb_predict, gt_verbs, gt_labels, image_names = None):
+    def add_point(self, verb_predict, gt_verbs, labels_predict, gt_labels, image_names = None):
         #encoded predictions should be batch x verbs x values #assumes the are the same order as the references
         #encoded reference should be batch x 1+ references*roles,values (sorted)
 
@@ -21,7 +21,7 @@ class imsitu_scorer():
         for i in range(batch_size):
             verb_pred = verb_predict[i]
             gt_verb = gt_verbs[i]
-            #label_pred = labels_predict[i]
+            label_pred = labels_predict[i]
             gt_label = gt_labels[i]
             #print('check sizes:', verb_pred.size(), gt_verb.size(), label_pred.size(), gt_label.size())
             sorted_idx = torch.sort(verb_pred, 0, True)[1]
@@ -47,7 +47,7 @@ class imsitu_scorer():
             gt_role_count = self.encoder.get_role_count(gt_v)
             score_card["n_value"] += gt_role_count
 
-            '''all_found = True
+            all_found = True
 
             for k in range(gt_role_count):
                 label_id = torch.max(label_pred[k],0)[1]
@@ -64,7 +64,7 @@ class imsitu_scorer():
                 if found: score_card["value*"] += 1
 
             if all_found and verb_found: score_card["value-all"] += 1
-            if all_found: score_card["value-all*"] += 1'''
+            if all_found: score_card["value-all*"] += 1
 
     def combine(self, rv, card):
         for (k,v) in card.items(): rv[k] += v

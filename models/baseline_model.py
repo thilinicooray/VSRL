@@ -201,7 +201,7 @@ class baseline(nn.Module):
 
 
 
-        '''self.parallel = parallel_table(self.img_size, self.embedding_size, self.num_verbs, self.num_roles)
+        self.parallel = parallel_table(self.img_size, self.embedding_size, self.num_verbs, self.num_roles)
         self.role_graph_init_module = nn.Sequential(
                                         self.parallel,
                                         mul_table(),
@@ -216,7 +216,7 @@ class baseline(nn.Module):
                             nhid=1024,
                             nclass=self.vocab_size,
                             dropout=0.5
-                        )'''
+                        )
 
 
     def forward(self, images, verbs, roles):
@@ -238,40 +238,39 @@ class baseline(nn.Module):
             verbs = verbs.to(torch.device('cuda'))
             roles = roles.to(torch.device('cuda'))'''
         #expected size = 6 x embedding size
-        '''role_init_embedding = self.role_graph_init_module([img_embedding, verbs, roles])
+        role_init_embedding = self.role_graph_init_module([img_embedding, verbs, roles])
         #print('role init: ', role_init_embedding.size())
 
         #graph forward
         #adjacency matrix for fully connected undirected graph
         #set only available roles to 1. every verb doesn't have 6 roles.
 
-        full_adj_matrix = torch.zeros([verbs.size()[0], self.encoder.get_max_role_count(), self.encoder.get_max_role_count()])
         adj_matrx = self.encoder.get_adj_matrix(verbs)
         if self.gpu_mode >= 0:
-            adj_matrx = full_adj_matrix.to(torch.device('cuda'))
+            adj_matrx = adj_matrx.to(torch.device('cuda'))
         role_predict = self.role_graph(role_init_embedding, adj_matrx)
         #print('role predict size :', role_predict.size())
 
-        return verb_predict, role_predict'''
-        return verb_predict
+        return verb_predict, role_predict
+        #return verb_predict
 
-    def calculate_loss(self, verb_pred, gt_verbs, gt_labels):
+    def calculate_loss(self, verb_pred, gt_verbs, roles_pred, gt_labels):
         #as per paper, loss is sum(i) sum(3) (cross_entropy(verb) + 1/6sum(all roles)cross_entropy(label)
 
         criterion = nn.CrossEntropyLoss()
 
-        verb_loss = criterion(verb_pred, torch.max(gt_verbs,1)[1])
-        #print('verb loss :', verb_loss)
+
+        target = torch.max(gt_verbs,1)[1]
+        verb_loss = criterion(verb_pred, target)
         #this is a multi label classification problem
         batch_size = verb_pred.size()[0]
-        loss = verb_loss
-        '''for i in range(batch_size):
+        loss = 0
+        for i in range(batch_size):
             for index in range(gt_labels.size()[1]):
                 sub_loss = criterion(roles_pred[i], torch.max(gt_labels[i,index,:,:],1)[1])
-                #print('sub loss :', sub_loss)
-                loss += sub_loss/roles_pred.size()[1]'''
+                loss += sub_loss
 
-        final_loss = loss/batch_size
+        final_loss = verb_loss + loss/batch_size
 
 
         return final_loss

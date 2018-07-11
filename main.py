@@ -37,10 +37,10 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
                 roles = torch.autograd.Variable(roles)
                 labels = torch.autograd.Variable(labels)
 
-            verb_predict = model(img, verb, roles)
+            verb_predict, role_predict = model(img, verb, roles)
 
-            loss = model.calculate_loss(verb_predict, verb, labels)
-            #print('current batch loss = ', loss.data)
+            loss = model.calculate_loss(verb_predict, verb, role_predict, labels)
+            print('current batch loss = ', loss)
 
             optimizer.zero_grad()
             loss.backward()
@@ -104,13 +104,13 @@ def eval(model, dev_loader, encoder, gpu_mode):
             roles = torch.autograd.Variable(roles)
             labels = torch.autograd.Variable(labels)
         #todo: implement beam search for eval mode
-        verb_predict = model(img, verb, roles)
+        verb_predict, role_predict = model(img, verb, roles)
 
-        loss = model.calculate_loss(verb_predict, verb, labels)
+        loss = model.calculate_loss(verb_predict, verb, role_predict, labels)
         dev_loss += loss.data
 
-        top1.add_point(verb_predict, verb, labels)
-        top5.add_point(verb_predict, verb, labels)
+        top1.add_point(verb_predict, verb, role_predict, labels)
+        top5.add_point(verb_predict, verb, role_predict, labels)
 
     return top1, top5, dev_loss
 
