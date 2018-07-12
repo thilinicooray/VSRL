@@ -138,9 +138,8 @@ class resnet_modified_small(nn.Module):
         return self.dropout(self.relu(self.linear(x.view(-1, 7*7*self.base_size()))))
 
 class parallel_table(nn.Module):
-    def __init__(self, img_size, embedding_size, num_verbs, num_roles):
+    def __init__(self, embedding_size, num_verbs, num_roles):
         super(parallel_table,self).__init__()
-        self.img_embedding_layer = nn.Linear(img_size, embedding_size)
         self.verb_lookup_table = nn.Linear(num_verbs, embedding_size)
         #org code has size num_role + 1 x embedding
         #how to use embeddings here? what is the gain?
@@ -148,10 +147,10 @@ class parallel_table(nn.Module):
 
 
     def forward(self,x):
-        #todo: what is the proper way to make batchx1024 -> batchx6x2014
+        #todo: what is the proper way to make batchx1024 -> batchx6x1024
         out3 = self.role_lookup_table(x[2])
         out_size = out3.size()[1]
-        out1 = torch.unsqueeze(self.img_embedding_layer(x[0]).repeat(1,out_size),1)
+        out1 = torch.unsqueeze(x[0].repeat(1,out_size),1)
         out1 = out1.view(out3.size())
         out2 = torch.unsqueeze(self.verb_lookup_table(x[1]).repeat(1,out_size),1)
         out2 = out2.view(out3.size())
@@ -188,8 +187,10 @@ class baseline(nn.Module):
         self.vocab_size = self.encoder.get_num_labels() #todo:how to decide this? original has 2000 only
         self.embedding_size = 1024 #user argument
 
+        self.img_embedding_layer = nn.Linear(self.img_size, self.embedding_size)
+        utils.init_weight(self.img_embedding_layer)
+
         self.verb_module = nn.Sequential(
-            nn.Linear(self.img_size, self.embedding_size),
             nn.ReLU(),
             nn.Linear(self.embedding_size, self.num_verbs),
         )
@@ -199,7 +200,7 @@ class baseline(nn.Module):
 
 
 
-        self.parallel = parallel_table(self.img_size, self.embedding_size, self.num_verbs, self.num_roles)
+        self.parallel = parallel_table(self.embedding_size, self.num_verbs, self.num_roles)
         self.role_graph_init_module = nn.Sequential(
                                         self.parallel,
                                         mul_table(),
@@ -220,8 +221,9 @@ class baseline(nn.Module):
     def forward(self, images, verbs, roles):
         #print('input size', images.size())
         img_embedding = self.cnn(images)
+        img_embedding_adjusted = self.img_embedding_layer(img_embedding)
         #print('cnn out size', img_embedding.size())
-        verb_predict = self.verb_module(img_embedding)
+        verb_predict = self.verb_module(img_embedding_adjusted)
         #print('verb module out ', verb_predict.size())
         #get argmax(verb is) from verb predict
         #todo: check which is the most correct way
@@ -236,7 +238,7 @@ class baseline(nn.Module):
             verbs = verbs.to(torch.device('cuda'))
             roles = roles.to(torch.device('cuda'))'''
         #expected size = 6 x embedding size
-        role_init_embedding = self.role_graph_init_module([img_embedding, verbs, roles])
+        role_init_embedding = self.role_graph_init_module([img_embedding_adjusted, verbs, roles])
         #print('role init: ', role_init_embedding.size())
 
         #graph forward
