@@ -44,7 +44,7 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
             verb_predict, role_predict = model(img, verb, roles)
 
             loss = model.calculate_loss(verb_predict, verb, role_predict, labels)
-            print('current batch loss = ', loss)
+            #print('current batch loss = ', loss)
 
             optimizer.zero_grad()
             loss.backward()
