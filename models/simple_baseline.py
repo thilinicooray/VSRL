@@ -197,6 +197,8 @@ class baseline(nn.Module):
 
         #get correct roles for each gt verb from roles pred
         target_role_encoding = self.encoder.get_role_encoding(target)
+        if self.gpu_mode >= 0:
+            target_role_encoding = target_role_encoding.cuda()
 
         role_pred_for_target = torch.bmm(target_role_encoding, roles_pred)
 
