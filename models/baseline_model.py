@@ -151,20 +151,24 @@ class parallel_table(nn.Module):
         image_embed = x[0]
         verb_embed = self.verb_lookup_table(x[1])
         role_embed = self.role_lookup_table(x[2])
+        role_embed_reshaped = role_embed.transpose(0,1)
         max_role_count = x[2].size()[1]
-        final_role_init = torch.empty(role_embed.size(), requires_grad=False)
+        image_embed_expand = image_embed.expand(max_role_count, image_embed.size(0), image_embed.size(1))
+        verb_embed_expand = verb_embed.expand(max_role_count, verb_embed.size(0), verb_embed.size(1))
+        '''final_role_init = torch.empty(role_embed.size(), requires_grad=False)
         for i in range(max_role_count):
             final_role_init[:,i, :] = image_embed * verb_embed * role_embed[:,i, :]
-        '''out3 = self.role_lookup_table(x[2])
+        out3 = self.role_lookup_table(x[2])
         out_size = out3.size()[1]
         out1 = torch.unsqueeze(x[0].repeat(1,out_size),1)
         out1 = out1.view(out3.size())
         out2 = torch.unsqueeze(self.verb_lookup_table(x[1]).repeat(1,out_size),1)
         out2 = out2.view(out3.size())
-        y = [out1, out2,out3 ]'''
+        y = [out1, out2,out3 ]
         #print('parallel size',final_role_init.size())
-        #print('parallel ',final_role_init)
-        return final_role_init
+        #print('parallel ',final_role_init)'''
+        final_role_init = image_embed_expand * verb_embed_expand * role_embed_reshaped
+        return final_role_init.transpose(0,1)
 
 class mul_table(nn.Module):
     def __init__(self):
@@ -201,7 +205,7 @@ class baseline(nn.Module):
 
         self.verb_module = nn.Sequential(
             nn.ReLU(),
-            nn.Linear(self.embedding_size, self.num_verbs),
+            nn.Linear(self.embedding_size, self.num_verbs)
         )
 
         #self.verb_module = nn.Linear(self.img_size, self.num_verbs)
@@ -256,10 +260,8 @@ class baseline(nn.Module):
         adj_matrx = self.encoder.get_adj_matrix(verbs)
         if self.gpu_mode >= 0:
             adj_matrx = torch.autograd.Variable(adj_matrx.cuda())
-            role_init_embedding = torch.autograd.Variable(role_init_embedding.cuda())
         else:
             adj_matrx = torch.autograd.Variable(adj_matrx)
-            role_init_embedding = torch.autograd.Variable(role_init_embedding)
         role_predict = self.role_graph(role_init_embedding, adj_matrx)
         #print('role predict size :', role_predict.size())
 

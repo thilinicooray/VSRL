@@ -139,15 +139,18 @@ def main():
 
     args = parser.parse_args()
 
-    train_set = json.load(open("imSitu/train.json"))
+    dataset_folder = 'imSitu'
+    imgset_folder = 'resized_256'
+
+    train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)
 
-    train_set = imsitu_loader('resized_256', train_set, encoder)
+    train_set = imsitu_loader(imgset_folder, train_set, encoder)
 
     train_loader = torch.utils.data.DataLoader(train_set, batch_size=64, shuffle=True, num_workers=3)
 
-    dev_set = json.load(open("imSitu/dev.json"))
-    dev_set = imsitu_loader('resized_256', dev_set, encoder)
+    dev_set = json.load(open(dataset_folder +"/dev.json"))
+    dev_set = imsitu_loader(imgset_folder, dev_set, encoder)
     dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=64, shuffle=True, num_workers=3)
 
     model = baseline_model.baseline(encoder, args.gpuid)
