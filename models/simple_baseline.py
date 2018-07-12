@@ -137,46 +137,6 @@ class resnet_modified_small(nn.Module):
 
         return self.dropout(self.relu(self.linear(x.view(-1, 7*7*self.base_size()))))
 
-class parallel_table(nn.Module):
-    def __init__(self, embedding_size, num_verbs, num_roles):
-        super(parallel_table,self).__init__()
-        self.verb_lookup_table = nn.Linear(num_verbs, embedding_size)
-        #org code has size num_role + 1 x embedding
-        #how to use embeddings here? what is the gain?
-        self.role_lookup_table = nn.Linear(num_roles, embedding_size)
-
-
-    def forward(self,x):
-        #todo: what is the proper way to make batchx1024 -> batchx6x1024
-        image_embed = x[0]
-        verb_embed = self.verb_lookup_table(x[1])
-        role_embed = self.role_lookup_table(x[2])
-        role_embed_reshaped = role_embed.transpose(0,1)
-        max_role_count = x[2].size()[1]
-        image_embed_expand = image_embed.expand(max_role_count, image_embed.size(0), image_embed.size(1))
-        verb_embed_expand = verb_embed.expand(max_role_count, verb_embed.size(0), verb_embed.size(1))
-        '''final_role_init = torch.empty(role_embed.size(), requires_grad=False)
-        for i in range(max_role_count):
-            final_role_init[:,i, :] = image_embed * verb_embed * role_embed[:,i, :]
-        out3 = self.role_lookup_table(x[2])
-        out_size = out3.size()[1]
-        out1 = torch.unsqueeze(x[0].repeat(1,out_size),1)
-        out1 = out1.view(out3.size())
-        out2 = torch.unsqueeze(self.verb_lookup_table(x[1]).repeat(1,out_size),1)
-        out2 = out2.view(out3.size())
-        y = [out1, out2,out3 ]
-        #print('parallel size',final_role_init.size())
-        #print('parallel ',final_role_init)'''
-        final_role_init = image_embed_expand * verb_embed_expand * role_embed_reshaped
-        return final_role_init.transpose(0,1)
-
-class mul_table(nn.Module):
-    def __init__(self):
-        super(mul_table, self).__init__()
-
-    def forward(self, x1):
-        x_mul = x1[0] * x1[1] * x1[2]
-        return x_mul
 
 class baseline(nn.Module):
     def __init__(self, encoder, gpu_mode,cnn_type='resnet_34'):
@@ -201,7 +161,6 @@ class baseline(nn.Module):
         self.embedding_size = 1024 #user argument
 
         self.verb_module = nn.Sequential(
-            nn.ReLU(),
             nn.Linear(self.embedding_size, self.num_verbs)
         )
 
@@ -210,89 +169,47 @@ class baseline(nn.Module):
 
 
 
-        self.parallel = parallel_table(self.embedding_size, self.num_verbs, self.num_roles)
-        self.role_graph_init_module = nn.Sequential(
-                                        self.parallel,
-                                        nn.ReLU()
-                                    )
-        self.role_graph_init_module.apply(utils.init_weight)
+        self.role_module =  nn.ModuleList(
+            [ nn.Linear(self.embedding_size, self.vocab_size) for i in range(self.num_roles)]
+        )
+        self.role_module.apply(utils.init_weight)
 
-        #nhid and dropout, user arg
-        #in GCN, they don't define #of nodes in init. they pass an adj matrix in forward.
-        self.role_graph = gcn.GCN(
-                            nfeat=self.embedding_size,
-                            nhid=1024,
-                            nclass=self.vocab_size,
-                            dropout=0.5
-                        )
 
 
     def forward(self, images, verbs, roles):
-        #print('input size', images.size())
         img_embedding = self.cnn(images)
-        #img_embedding_adjusted = self.img_embedding_layer(img_embedding)
-        #print('cnn out size', img_embedding.size())
         verb_predict = self.verb_module(img_embedding)
-        #print('verb module out ', verb_predict.size())
-        #get argmax(verb is) from verb predict
-        #todo: check which is the most correct way
-        '''
-        original code use gold verbs to insert to role predict module
-        _, verb_id = torch.max(verb_predict, 1)
-        verbs = self.encoder.get_verb_encoding(verb_id)
-        roles = self.encoder.get_role_encoding(verb_id)
 
-        if self.gpu_mode >= 0: 
-            #if torch.cuda.is_available():
-            verbs = verbs.to(torch.device('cuda'))
-            roles = roles.to(torch.device('cuda'))'''
-        #expected size = 6 x embedding size
-        role_init_embedding = self.role_graph_init_module([img_embedding, verbs, roles])
-        #print('role init: ', role_init_embedding.size())
+        role_list = []
+        for i, l in enumerate(self.role_module):
+            role_list.append(l(img_embedding))
 
-        #graph forward
-        #adjacency matrix for fully connected undirected graph
-        #set only available roles to 1. every verb doesn't have 6 roles.
-
-        adj_matrx = self.encoder.get_adj_matrix(verbs)
-        if self.gpu_mode >= 0:
-            adj_matrx = torch.autograd.Variable(adj_matrx.cuda())
-        else:
-            adj_matrx = torch.autograd.Variable(adj_matrx)
-        role_predict = self.role_graph(role_init_embedding, adj_matrx)
-        #print('role predict size :', role_predict.size())
+        role_predict = torch.stack(role_list).transpose(0,1)
 
         return verb_predict, role_predict
-        #return verb_predict
 
     def calculate_loss(self, verb_pred, gt_verbs, roles_pred, gt_labels):
-        '''
-
-        :param verb_pred: write sizes
-        :param gt_verbs:
-        :param roles_pred:
-        :param gt_labels:
-        :return:
-        '''
-        #as per paper, loss is sum(i) sum(3) (cross_entropy(verb) + 1/6sum(all roles)cross_entropy(label)
 
         criterion = nn.CrossEntropyLoss()
 
-
         target = torch.max(gt_verbs,1)[1]
         verb_loss = criterion(verb_pred, target)
-        #this is a multi label classification problem
-        batch_size = verb_pred.size()[0]
+
+        #get correct roles for each gt verb from roles pred
+        target_role_encoding = self.encoder.get_role_encoding(target)
+
+        role_pred_for_target = torch.bmm(target_role_encoding, roles_pred)
+
+        batch_size = gt_verbs.size(0)
+
         loss = 0
         for i in range(batch_size):
             sub_loss = 0
             for index in range(gt_labels.size()[1]):
-                sub_loss += criterion(roles_pred[i], torch.max(gt_labels[i,index,:,:],1)[1])
+                sub_loss += criterion(role_pred_for_target[i], torch.max(gt_labels[i,index,:,:],1)[1])
             loss += sub_loss
 
-
         final_loss = verb_loss + loss/batch_size
-
 
         return final_loss
 
