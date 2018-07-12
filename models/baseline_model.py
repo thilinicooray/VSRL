@@ -148,14 +148,23 @@ class parallel_table(nn.Module):
 
     def forward(self,x):
         #todo: what is the proper way to make batchx1024 -> batchx6x1024
-        out3 = self.role_lookup_table(x[2])
+        image_embed = x[0]
+        verb_embed = self.verb_lookup_table(x[1])
+        role_embed = self.role_lookup_table(x[2])
+        max_role_count = x[2].size()[1]
+        final_role_init = torch.empty(role_embed.size(), requires_grad=False)
+        for i in range(max_role_count):
+            final_role_init[:,i, :] = image_embed * verb_embed * role_embed[:,i, :]
+        '''out3 = self.role_lookup_table(x[2])
         out_size = out3.size()[1]
         out1 = torch.unsqueeze(x[0].repeat(1,out_size),1)
         out1 = out1.view(out3.size())
         out2 = torch.unsqueeze(self.verb_lookup_table(x[1]).repeat(1,out_size),1)
         out2 = out2.view(out3.size())
-        y = [out1, out2,out3 ]
-        return y
+        y = [out1, out2,out3 ]'''
+        #print('parallel size',final_role_init.size())
+        #print('parallel ',final_role_init)
+        return final_role_init
 
 class mul_table(nn.Module):
     def __init__(self):
@@ -203,7 +212,6 @@ class baseline(nn.Module):
         self.parallel = parallel_table(self.embedding_size, self.num_verbs, self.num_roles)
         self.role_graph_init_module = nn.Sequential(
                                         self.parallel,
-                                        mul_table(),
                                         nn.ReLU()
                                     )
         self.role_graph_init_module.apply(utils.init_weight)
