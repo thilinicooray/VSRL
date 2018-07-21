@@ -12,7 +12,13 @@ class frcnn_pretrained_vgg_modified(nn.Module):
         self.fasterRCNN = vgg16(pretrained=False)
         self.fasterRCNN.create_architecture()
         checkpoint = torch.load(pretrained_model)
-        self.fasterRCNN.load_state_dict(checkpoint['model'])
+
+        #getting only the required keys from original pretrained model
+        updated_frcnn_dict = self.fasterRCNN.state_dict()
+        filtered_pretrained_dict = {k: v for k, v in checkpoint['model'].items() if k in updated_frcnn_dict}
+        updated_frcnn_dict.update(filtered_pretrained_dict)
+
+        self.fasterRCNN.load_state_dict(updated_frcnn_dict)
         #print('model', self.frcnn_vgg)
 
         '''self.frcnn_vgg_features = self.frcnn_vgg.features
