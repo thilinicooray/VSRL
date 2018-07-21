@@ -14,7 +14,7 @@ from ..roi_align.modules.roi_align import RoIAlignAvg
 from ..rpn.proposal_target_layer_cascade import _ProposalTargetLayer
 import time
 import pdb
-from faster_rcnn.utils.net_utils import _smooth_l1_loss, _crop_pool_layer, _affine_grid_gen, _affine_theta
+from ..utils.net_utils import _smooth_l1_loss, _crop_pool_layer, _affine_grid_gen, _affine_theta
 
 class _fasterRCNN(nn.Module):
     """ faster RCNN """
