@@ -44,7 +44,10 @@ class imsitu_loader(data.Dataset):
         gt_boxes = torch.FloatTensor(1)
 
 
-        im_in = np.array(Image.open(os.path.join(self.img_dir, _id)).convert('RGB'))
+        #im_in = np.array(Image.open(os.path.join(self.img_dir, _id)).convert('RGB'))
+        im_in = Image.open(os.path.join(self.img_dir, _id)).convert('RGB')
+        transformed = self.transform(im_in)
+        print('transformed image :', transformed)
         '''im_file = os.path.join(self.img_dir, _id)
         # im = cv2.imread(im_file)
         im_in = np.array(imread(im_file))
