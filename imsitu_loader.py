@@ -30,6 +30,7 @@ class imsitu_loader(data.Dataset):
         ])
 
     def __getitem__(self, index):
+        print('get item ', index)
         _id = self.ids[index]
         ann = self.annotations[_id]
         '''img = Image.open(os.path.join(self.img_dir, _id)).convert('RGB')
@@ -46,6 +47,8 @@ class imsitu_loader(data.Dataset):
 
         im = im_in[:,:,::-1]
 
+        print('read img ', index)
+
         blobs, im_scales = self._get_image_blob(im)
         im_blob = blobs
         im_info_np = np.array([[im_blob.shape[1], im_blob.shape[2], im_scales[0]]], dtype=np.float32)
@@ -53,6 +56,8 @@ class imsitu_loader(data.Dataset):
         im_data_pt = torch.from_numpy(im_blob)
         im_data_pt = im_data_pt.permute(0, 3, 1, 2)
         im_info_pt = torch.from_numpy(im_info_np)
+
+        print('add image ', index)
 
         im_data.data.resize_(im_data_pt.size()).copy_(im_data_pt)
         im_info.data.resize_(im_info_pt.size()).copy_(im_info_pt)
