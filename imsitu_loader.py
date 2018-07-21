@@ -24,8 +24,8 @@ class imsitu_loader(data.Dataset):
         tv.transforms.RandomHorizontalFlip(),
         '''
         self.transform = transforms.Compose([
-            transforms.Scale(224),
-            transforms.CenterCrop(224),
+            transforms.Resize(224),
+            #transforms.CenterCrop(224),
             transforms.ToTensor(),
             normalize
         ])
@@ -38,6 +38,11 @@ class imsitu_loader(data.Dataset):
         #transform must be None in order to give it as a tensor
         if self.transform is not None: img = self.transform(img)'''
 
+        '''
+        did not follow resizing approch from faster rcnn code.
+        
+        '''
+
         im_data = torch.FloatTensor(1)
         im_info = torch.FloatTensor(1)
         num_boxes = torch.LongTensor(1)
@@ -46,8 +51,9 @@ class imsitu_loader(data.Dataset):
 
         #im_in = np.array(Image.open(os.path.join(self.img_dir, _id)).convert('RGB'))
         im_in = Image.open(os.path.join(self.img_dir, _id)).convert('RGB')
+        #print('org image :', im_in.size())
         transformed = self.transform(im_in)
-        print('transformed image :', transformed.size())
+
         '''im_file = os.path.join(self.img_dir, _id)
         # im = cv2.imread(im_file)
         im_in = np.array(imread(im_file))
@@ -55,17 +61,18 @@ class imsitu_loader(data.Dataset):
             im_in = im_in[:,:,np.newaxis]
             im_in = np.concatenate((im_in,im_in,im_in), axis=2)'''
 
-        im = im_in[:,:,::-1]
+        transformed = transformed[::-1,:,:]
 
-        print('read img ', index)
+        #print('read img ', index)
 
-        blobs, im_scales = self._get_image_blob(im)
-        print('got blob ', index)
-        im_blob = blobs
-        im_info_np = np.array([[im_blob.shape[1], im_blob.shape[2], im_scales[0]]], dtype=np.float32)
+        #blobs, im_scales = self._get_image_blob(im)
+        #print('got blob ', index)
+        #im_blob = blobs
+        #todo get correct scale of the image, this is needed for region proposals
+        im_info_np = np.array([[transformed.size(0), transformed.size(1), 1.0]], dtype=np.float32)
 
-        im_data_pt = torch.from_numpy(im_blob)
-        im_data_pt = im_data_pt.permute(0, 3, 1, 2)
+        #im_data_pt = torch.from_numpy(im_blob)
+        im_data_pt = torch.unsqueeze(transformed, 0)
         im_info_pt = torch.from_numpy(im_info_np)
 
         print('add image ', index)
