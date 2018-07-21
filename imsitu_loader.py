@@ -94,6 +94,7 @@ class imsitu_loader(data.Dataset):
         im_orig -= cfg.PIXEL_MEANS
 
         im_shape = im_orig.shape
+        print('image shape:', im_shape)
         im_size_min = np.min(im_shape[0:2])
         im_size_max = np.max(im_shape[0:2])
 
@@ -109,8 +110,9 @@ class imsitu_loader(data.Dataset):
             if np.round(im_scale * im_size_max) > cfg.TEST.MAX_SIZE:
                 im_scale = float(cfg.TEST.MAX_SIZE) / float(im_size_max)
             print('round', target_size)
-            im = cv2.resize(im_orig, None, None, fx=im_scale, fy=im_scale,
-                            interpolation=cv2.INTER_LINEAR)
+            '''im = cv2.resize(im_orig, None, None, fx=im_scale, fy=im_scale,
+                            interpolation=cv2.INTER_LINEAR)'''
+            im = self.transform(im_orig)
             print('resize', target_size)
             im_scale_factors.append(im_scale)
             print('scale factor', target_size)
@@ -119,5 +121,5 @@ class imsitu_loader(data.Dataset):
 
         # Create a blob to hold the input images
         blob = im_list_to_blob(processed_ims)
-        print('leaving _get_image_blob', target_size)
+        print('leaving _get_image_blob', len(np.array(im_scale_factors)))
         return blob, np.array(im_scale_factors)
