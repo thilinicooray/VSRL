@@ -3,33 +3,20 @@ import torch.nn as nn
 import torchvision as tv
 from . import utils
 from .pygcn import gcn
+from .faster_rcnn.faster_rcnn.vgg16_modified import vgg16
 
 
-class resnet152_pretrained(nn.Module):
-    def __init__(self, embed_size=1024):
-        """Load the pretrained ResNet-152 and replace top fc layer."""
-        super(resnet152_pretrained, self).__init__()
-        resnet = tv.models.resnet152(pretrained=True)
-        modules = list(resnet.children())[:-1]      # delete the last fc layer.
-        self.resnet = nn.Sequential(*modules)
-        self.linear = nn.Linear(resnet.fc.in_features, embed_size)
-        self.bn = nn.BatchNorm1d(embed_size, momentum=0.01)
+class frcnn_pretrained_vgg_modified(nn.Module):
+    def __init__(self, pretrained_model):
+        super(frcnn_pretrained_vgg_modified,self).__init__()
+        self.fasterRCNN = vgg16(pretrained=False)
+        self.fasterRCNN.create_architecture()
+        checkpoint = torch.load(pretrained_model)
+        self.fasterRCNN.load_state_dict(checkpoint['model'])
+        #print('model', self.frcnn_vgg)
 
-    def forward(self, images):
-        """Extract feature vectors from input images."""
-        with torch.no_grad():
-            features = self.resnet(images)
-        features = features.reshape(features.size(0), -1)
-        features = self.bn(self.linear(features))
-        return features
-
-    def rep_size(self): return 1024
-
-class vgg_modified(nn.Module):
-    def __init__(self):
-        super(vgg_modified,self).__init__()
-        self.vgg = tv.models.vgg16(pretrained=True)
-        self.vgg_features = self.vgg.features
+        '''self.frcnn_vgg_features = self.frcnn_vgg.features
+        #self.vgg_features = self.vgg.features
         #self.classifier = nn.Sequential(
         #nn.Dropout(),
         self.lin1 = nn.Linear(512 * 7 * 7, 1024)
@@ -40,102 +27,13 @@ class vgg_modified(nn.Module):
         self.dropout2 = nn.Dropout()
 
         utils.init_weight(self.lin1)
-        utils.init_weight(self.lin2)
+        utils.init_weight(self.lin2)'''
 
     def rep_size(self): return 1024
 
-    def forward(self,x):
-        return self.dropout2(self.relu2(self.lin2(self.dropout1(self.relu1(self.lin1(self.vgg_features(x)))))))
-
-class resnet_modified_large(nn.Module):
-    def __init__(self):
-        super(resnet_modified_large, self).__init__()
-        self.resnet = tv.models.resnet101(pretrained=True)
-        #probably want linear, relu, dropout
-        self.linear = nn.Linear(7*7*2048, 1024)
-        self.dropout2d = nn.Dropout2d(.5)
-        self.dropout = nn.Dropout(.5)
-        self.relu = nn.LeakyReLU()
-        utils.init_weight(self.linear)
-
-    def base_size(self): return 2048
-    def rep_size(self): return 1024
-
-    def forward(self, x):
-        x = self.resnet.conv1(x)
-        x = self.resnet.bn1(x)
-        x = self.resnet.relu(x)
-        x = self.resnet.maxpool(x)
-
-        x = self.resnet.layer1(x)
-        x = self.resnet.layer2(x)
-        x = self.resnet.layer3(x)
-        x = self.resnet.layer4(x)
-
-        x = self.dropout2d(x)
-
-        #print x.size()
-        return self.dropout(self.relu(self.linear(x.view(-1, 7*7*self.base_size()))))
-
-class resnet_modified_medium(nn.Module):
-    def __init__(self):
-        super(resnet_modified_medium, self).__init__()
-        self.resnet = tv.models.resnet50(pretrained=True)
-        #probably want linear, relu, dropout
-        self.linear = nn.Linear(7*7*2048, 1024)
-        self.dropout2d = nn.Dropout2d(.5)
-        self.dropout = nn.Dropout(.5)
-        self.relu = nn.LeakyReLU()
-        utils.init_weight(self.linear)
-
-    def base_size(self): return 2048
-    def rep_size(self): return 1024
-
-    def forward(self, x):
-        x = self.resnet.conv1(x)
-        x = self.resnet.bn1(x)
-        x = self.resnet.relu(x)
-        x = self.resnet.maxpool(x)
-
-        x = self.resnet.layer1(x)
-        x = self.resnet.layer2(x)
-        x = self.resnet.layer3(x)
-        x = self.resnet.layer4(x)
-
-        x = self.dropout2d(x)
-
-        #print x.size()
-        return self.dropout(self.relu(self.linear(x.view(-1, 7*7*self.base_size()))))
-
-
-class resnet_modified_small(nn.Module):
-    def __init__(self):
-        super(resnet_modified_small, self).__init__()
-        self.resnet = tv.models.resnet34(pretrained=True)
-        #probably want linear, relu, dropout
-        self.linear = nn.Linear(7*7*512, 1024)
-        self.dropout2d = nn.Dropout2d(.5)
-        self.dropout = nn.Dropout(.5)
-        self.relu = nn.LeakyReLU()
-        utils.init_weight(self.linear)
-
-    def base_size(self): return 512
-    def rep_size(self): return 1024
-
-    def forward(self, x):
-        x = self.resnet.conv1(x)
-        x = self.resnet.bn1(x)
-        x = self.resnet.relu(x)
-        x = self.resnet.maxpool(x)
-
-        x = self.resnet.layer1(x)
-        x = self.resnet.layer2(x)
-        x = self.resnet.layer3(x)
-        x = self.resnet.layer4(x)
-
-        x = self.dropout2d(x)
-
-        return self.dropout(self.relu(self.linear(x.view(-1, 7*7*self.base_size()))))
+    def forward(self, im_data, im_info, gt_boxes, num_boxes):
+        print('frcnn original size:',self.fasterRCNN(im_data, im_info, gt_boxes, num_boxes).size())
+        return self.dropout2(self.relu2(self.lin2(self.dropout1(self.relu1(self.lin1(self.vgg_features()))))))
 
 class parallel_table(nn.Module):
     def __init__(self, embedding_size, num_verbs, num_roles):
@@ -179,16 +77,15 @@ class mul_table(nn.Module):
         return x_mul
 
 class baseline(nn.Module):
-    def __init__(self, encoder, gpu_mode,cnn_type='resnet_34'):
+    def __init__(self, encoder, gpu_mode, pretrained_cnn_path, cnn_type='faster_rcnn_vgg'):
         super(baseline, self).__init__()
         self.encoder = encoder
         self.gpu_mode = gpu_mode
 
         #get the CNN
-        if cnn_type == 'resnet152' : self.cnn = resnet152_pretrained()
-        elif cnn_type == 'resnet_101' : self.cnn = resnet_modified_large()
-        elif cnn_type == 'resnet_50': self.cnn = resnet_modified_medium()
-        elif cnn_type == 'resnet_34': self.cnn = resnet_modified_small()
+        if cnn_type == 'faster_rcnn_vgg' :
+            self.cnn = frcnn_pretrained_vgg_modified(pretrained_cnn_path)
+            self.cnn.eval()
         else:
             print('unknown base network')
             exit()
@@ -212,24 +109,25 @@ class baseline(nn.Module):
 
         self.parallel = parallel_table(self.embedding_size, self.num_verbs, self.num_roles)
         self.role_graph_init_module = nn.Sequential(
-                                        self.parallel,
-                                        nn.ReLU()
-                                    )
+            self.parallel,
+            nn.ReLU()
+        )
         self.role_graph_init_module.apply(utils.init_weight)
 
         #nhid and dropout, user arg
         #in GCN, they don't define #of nodes in init. they pass an adj matrix in forward.
         self.role_graph = gcn.GCN(
-                            nfeat=self.embedding_size,
-                            nhid=1024,
-                            nclass=self.vocab_size,
-                            dropout=0.5
-                        )
+            nfeat=self.embedding_size,
+            nhid=1024,
+            nclass=self.vocab_size,
+            dropout=0.5
+        )
 
 
-    def forward(self, images, verbs, roles):
+    def forward(self, im_data, im_info, gt_boxes, num_boxes, verbs, roles):
         #print('input size', images.size())
-        img_embedding = self.cnn(images)
+
+        img_embedding = self.cnn(im_data, im_info, gt_boxes, num_boxes)
         #img_embedding_adjusted = self.img_embedding_layer(img_embedding)
         #print('cnn out size', img_embedding.size())
         verb_predict = self.verb_module(img_embedding)

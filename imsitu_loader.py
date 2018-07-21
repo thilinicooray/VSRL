@@ -2,6 +2,12 @@ import torch.utils.data as data
 import torchvision.transforms as transforms
 from PIL import Image
 import os
+import numpy as np
+import cv2
+import torch
+
+from models.faster_rcnn.utils.blob import im_list_to_blob
+from models.faster_rcnn.utils.config import cfg
 
 class imsitu_loader(data.Dataset):
     def __init__(self, img_dir, annotation_file, encoder):
@@ -26,12 +32,72 @@ class imsitu_loader(data.Dataset):
     def __getitem__(self, index):
         _id = self.ids[index]
         ann = self.annotations[_id]
-        img = Image.open(os.path.join(self.img_dir, _id)).convert('RGB')
+        '''img = Image.open(os.path.join(self.img_dir, _id)).convert('RGB')
         #transform must be None in order to give it as a tensor
-        if self.transform is not None: img = self.transform(img)
+        if self.transform is not None: img = self.transform(img)'''
+
+        im_data = torch.FloatTensor(1)
+        im_info = torch.FloatTensor(1)
+        num_boxes = torch.LongTensor(1)
+        gt_boxes = torch.FloatTensor(1)
+
+
+        im_in = np.array(Image.open(os.path.join(self.img_dir, _id)).convert('BGR'))
+
+        im = im_in[:,:,::-1]
+
+        blobs, im_scales = self._get_image_blob(im)
+        assert len(im_scales) == 1, "Only single-image batch implemented"
+        im_blob = blobs
+        im_info_np = np.array([[im_blob.shape[1], im_blob.shape[2], im_scales[0]]], dtype=np.float32)
+
+        im_data_pt = torch.from_numpy(im_blob)
+        im_data_pt = im_data_pt.permute(0, 3, 1, 2)
+        im_info_pt = torch.from_numpy(im_info_np)
+
+        im_data.data.resize_(im_data_pt.size()).copy_(im_data_pt)
+        im_info.data.resize_(im_info_pt.size()).copy_(im_info_pt)
+        gt_boxes.data.resize_(1, 1, 5).zero_()
+        num_boxes.data.resize_(1).zero_()
+
+
         verb, roles, labels = self.encoder.encode(ann)
 
-        return img, verb, roles, labels
+        return im_data, im_info, gt_boxes, num_boxes, verb, roles, labels
 
     def __len__(self):
         return len(self.annotations)
+
+    def _get_image_blob(self, im):
+        """Converts an image into a network input.
+        Arguments:
+          im (ndarray): a color image in BGR order
+        Returns:
+          blob (ndarray): a data blob holding an image pyramid
+          im_scale_factors (list): list of image scales (relative to im) used
+            in the image pyramid
+        """
+        im_orig = im.astype(np.float32, copy=True)
+        im_orig -= cfg.PIXEL_MEANS
+
+        im_shape = im_orig.shape
+        im_size_min = np.min(im_shape[0:2])
+        im_size_max = np.max(im_shape[0:2])
+
+        processed_ims = []
+        im_scale_factors = []
+
+        for target_size in cfg.TEST.SCALES:
+            im_scale = float(target_size) / float(im_size_min)
+            # Prevent the biggest axis from being more than MAX_SIZE
+            if np.round(im_scale * im_size_max) > cfg.TEST.MAX_SIZE:
+                im_scale = float(cfg.TEST.MAX_SIZE) / float(im_size_max)
+            im = cv2.resize(im_orig, None, None, fx=im_scale, fy=im_scale,
+                            interpolation=cv2.INTER_LINEAR)
+            im_scale_factors.append(im_scale)
+            processed_ims.append(im)
+
+        # Create a blob to hold the input images
+        blob = im_list_to_blob(processed_ims)
+
+        return blob, np.array(im_scale_factors)
