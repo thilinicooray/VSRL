@@ -44,13 +44,13 @@ class imsitu_loader(data.Dataset):
         gt_boxes = torch.FloatTensor(1)
 
 
-        #im_in = np.array(Image.open(os.path.join(self.img_dir, _id)).convert('RGB'))
-        im_file = os.path.join(self.img_dir, _id)
+        im_in = np.array(Image.open(os.path.join(self.img_dir, _id)).convert('RGB'))
+        '''im_file = os.path.join(self.img_dir, _id)
         # im = cv2.imread(im_file)
         im_in = np.array(imread(im_file))
         if len(im_in.shape) == 2:
             im_in = im_in[:,:,np.newaxis]
-            im_in = np.concatenate((im_in,im_in,im_in), axis=2)
+            im_in = np.concatenate((im_in,im_in,im_in), axis=2)'''
 
         im = im_in[:,:,::-1]
 
@@ -112,7 +112,7 @@ class imsitu_loader(data.Dataset):
             print('round', target_size)
             '''im = cv2.resize(im_orig, None, None, fx=im_scale, fy=im_scale,
                             interpolation=cv2.INTER_LINEAR)'''
-            im = self.transform(im_orig)
+            im = self.transform(Image.fromarray(im_orig))
             print('resize', target_size)
             im_scale_factors.append(im_scale)
             print('scale factor', target_size)
