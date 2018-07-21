@@ -61,7 +61,7 @@ class imsitu_loader(data.Dataset):
             im_in = im_in[:,:,np.newaxis]
             im_in = np.concatenate((im_in,im_in,im_in), axis=2)'''
 
-        transformed = torch.from_numpy(np.array(transformed)[::-1,:,:])
+        transformed = torch.from_numpy(np.array(transformed)[::-1,:,:].copy())
 
         #print('read img ', index)
 
