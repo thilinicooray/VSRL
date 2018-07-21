@@ -4,6 +4,7 @@ from PIL import Image
 import os
 import numpy as np
 import cv2
+from scipy.misc import imread
 import torch
 
 from models.faster_rcnn.utils.blob import im_list_to_blob
@@ -43,13 +44,20 @@ class imsitu_loader(data.Dataset):
         gt_boxes = torch.FloatTensor(1)
 
 
-        im_in = np.array(Image.open(os.path.join(self.img_dir, _id)).convert('RGB'))
+        #im_in = np.array(Image.open(os.path.join(self.img_dir, _id)).convert('RGB'))
+        im_file = os.path.join(self.img_dir, _id)
+        # im = cv2.imread(im_file)
+        im_in = np.array(imread(im_file))
+        if len(im_in.shape) == 2:
+            im_in = im_in[:,:,np.newaxis]
+            im_in = np.concatenate((im_in,im_in,im_in), axis=2)
 
         im = im_in[:,:,::-1]
 
         print('read img ', index)
 
         blobs, im_scales = self._get_image_blob(im)
+        print('got blob ', index)
         im_blob = blobs
         im_info_np = np.array([[im_blob.shape[1], im_blob.shape[2], im_scales[0]]], dtype=np.float32)
 
