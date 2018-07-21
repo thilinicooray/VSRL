@@ -42,7 +42,7 @@ class imsitu_loader(data.Dataset):
         gt_boxes = torch.FloatTensor(1)
 
 
-        im_in = np.array(Image.open(os.path.join(self.img_dir, _id)).convert('BGR'))
+        im_in = np.array(Image.open(os.path.join(self.img_dir, _id)).convert('RGB'))
 
         im = im_in[:,:,::-1]
 
