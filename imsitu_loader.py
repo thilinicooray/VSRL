@@ -104,13 +104,18 @@ class imsitu_loader(data.Dataset):
         for target_size in cfg.TEST.SCALES:
             print('came for _get_image_blob', target_size)
             im_scale = float(target_size) / float(im_size_min)
+            print('got scale', target_size)
             # Prevent the biggest axis from being more than MAX_SIZE
             if np.round(im_scale * im_size_max) > cfg.TEST.MAX_SIZE:
                 im_scale = float(cfg.TEST.MAX_SIZE) / float(im_size_max)
+            print('round', target_size)
             im = cv2.resize(im_orig, None, None, fx=im_scale, fy=im_scale,
                             interpolation=cv2.INTER_LINEAR)
+            print('resize', target_size)
             im_scale_factors.append(im_scale)
+            print('scale factor', target_size)
             processed_ims.append(im)
+            print('done', target_size)
 
         # Create a blob to hold the input images
         blob = im_list_to_blob(processed_ims)
