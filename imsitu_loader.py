@@ -61,15 +61,15 @@ class imsitu_loader(data.Dataset):
             im_in = im_in[:,:,np.newaxis]
             im_in = np.concatenate((im_in,im_in,im_in), axis=2)'''
 
-        transformed = transformed[::-1,:,:]
+        transformed = torch.from_numpy(np.array(transformed)[::-1,:,:])
 
         #print('read img ', index)
 
         #blobs, im_scales = self._get_image_blob(im)
         #print('got blob ', index)
         #im_blob = blobs
-        #todo get correct scale of the image, this is needed for region proposals
-        im_info_np = np.array([[transformed.size(0), transformed.size(1), 1.0]], dtype=np.float32)
+        #todo: get correct scale of the image, this is needed for region proposals
+        im_info_np = np.array([[transformed.size(1), transformed.size(2), 1.0]], dtype=np.float32)
 
         #im_data_pt = torch.from_numpy(im_blob)
         im_data_pt = torch.unsqueeze(transformed, 0)
