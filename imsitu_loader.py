@@ -47,7 +47,6 @@ class imsitu_loader(data.Dataset):
         im = im_in[:,:,::-1]
 
         blobs, im_scales = self._get_image_blob(im)
-        assert len(im_scales) == 1, "Only single-image batch implemented"
         im_blob = blobs
         im_info_np = np.array([[im_blob.shape[1], im_blob.shape[2], im_scales[0]]], dtype=np.float32)
 
@@ -62,6 +61,7 @@ class imsitu_loader(data.Dataset):
 
 
         verb, roles, labels = self.encoder.encode(ann)
+        print('CAME HERE')
 
         return im_data, im_info, gt_boxes, num_boxes, verb, roles, labels
 
