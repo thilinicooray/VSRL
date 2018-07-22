@@ -29,6 +29,10 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
         #sizes batch_size*3*height*width, batch*504*1, batch*6*190*1, batch*3*6*lebale_count*1
         for i, (im_data, im_info, gt_boxes, num_boxes, verb, roles, labels) in enumerate(train_loader):
             total_steps += 1
+            im_data = torch.squeeze(im_data,0)
+            im_info = torch.squeeze(im_info,0)
+            gt_boxes = torch.squeeze(gt_boxes,0)
+            num_boxes = torch.squeeze(num_boxes,0)
 
             print('batch details \n\timdata: ', im_data.size())
             print('\tim_info: ', im_info.size())
