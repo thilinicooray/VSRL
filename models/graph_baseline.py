@@ -21,11 +21,11 @@ class frcnn_pretrained_vgg_modified(nn.Module):
         self.fasterRCNN.load_state_dict(updated_frcnn_dict)
         #print('model', self.frcnn_vgg)
 
-        '''self.frcnn_vgg_features = self.frcnn_vgg.features
+        #self.frcnn_vgg_features = self.frcnn_vgg.features
         #self.vgg_features = self.vgg.features
         #self.classifier = nn.Sequential(
         #nn.Dropout(),
-        self.lin1 = nn.Linear(512 * 7 * 7, 1024)
+        self.lin1 = nn.Linear(4096, 1024)
         self.relu1 = nn.ReLU(True)
         self.dropout1 = nn.Dropout()
         self.lin2 =  nn.Linear(1024, 1024)
@@ -33,13 +33,13 @@ class frcnn_pretrained_vgg_modified(nn.Module):
         self.dropout2 = nn.Dropout()
 
         utils.init_weight(self.lin1)
-        utils.init_weight(self.lin2)'''
+        utils.init_weight(self.lin2)
 
     def rep_size(self): return 1024
 
     def forward(self, im_data, im_info, gt_boxes, num_boxes):
         print('frcnn original size:',self.fasterRCNN(im_data, im_info, gt_boxes, num_boxes).size())
-        return self.dropout2(self.relu2(self.lin2(self.dropout1(self.relu1(self.lin1(self.vgg_features()))))))
+        return self.dropout2(self.relu2(self.lin2(self.dropout1(self.relu1(self.lin1(self.fasterRCNN(im_data, im_info, gt_boxes, num_boxes)))))))
 
 class parallel_table(nn.Module):
     def __init__(self, embedding_size, num_verbs, num_roles):
@@ -135,7 +135,7 @@ class baseline(nn.Module):
 
         img_embedding = self.cnn(im_data, im_info, gt_boxes, num_boxes)
         #img_embedding_adjusted = self.img_embedding_layer(img_embedding)
-        #print('cnn out size', img_embedding.size())
+        print('cnn out size', img_embedding.size())
         verb_predict = self.verb_module(img_embedding)
         #print('verb module out ', verb_predict.size())
         #get argmax(verb is) from verb predict
