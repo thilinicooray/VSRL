@@ -29,7 +29,7 @@ class vgg16(_fasterRCNN):
         vgg = models.vgg16()
         if self.pretrained:
             print("Loading pretrained weights from %s" %(self.model_path))
-            state_dict = torch.load(self.model_path, map_location='cpu')
+            state_dict = torch.load(self.model_path)
             vgg.load_state_dict({k:v for k,v in state_dict.items() if k in vgg.state_dict()})
 
         vgg.classifier = nn.Sequential(*list(vgg.classifier._modules.values())[:-1])
