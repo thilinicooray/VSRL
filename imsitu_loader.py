@@ -31,7 +31,7 @@ class imsitu_loader(data.Dataset):
         ])
 
     def __getitem__(self, index):
-        print('get item ', index)
+        #print('get item ', index)
         _id = self.ids[index]
         ann = self.annotations[_id]
         '''img = Image.open(os.path.join(self.img_dir, _id)).convert('RGB')
@@ -75,7 +75,7 @@ class imsitu_loader(data.Dataset):
         im_data_pt = torch.unsqueeze(transformed, 0)
         im_info_pt = torch.from_numpy(im_info_np)
 
-        print('add image ', index)
+        #print('add image ', index)
 
         im_data.data.resize_(im_data_pt.size()).copy_(im_data_pt)
         im_info.data.resize_(im_info_pt.size()).copy_(im_info_pt)
@@ -84,7 +84,7 @@ class imsitu_loader(data.Dataset):
 
 
         verb, roles, labels = self.encoder.encode(ann)
-        print('CAME HERE')
+        #print('CAME HERE')
 
         return im_data, im_info, gt_boxes, num_boxes, verb, roles, labels
 

@@ -30,6 +30,14 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
         for i, (im_data, im_info, gt_boxes, num_boxes, verb, roles, labels) in enumerate(train_loader):
             total_steps += 1
 
+            print('batch details \n\timdata: ', im_data.size())
+            print('\tim_info: ', im_info.size())
+            print('\tgt_boxes: ', gt_boxes.size())
+            print('\tnum_boxes: ', num_boxes.size())
+            print('\tverb: ', verb.size())
+            print('\troles: ', roles.size())
+            print('\tlabels: ', labels.size())
+
             if gpu_mode >= 0:
                 im_data = torch.autograd.Variable(im_data.cuda())
                 im_info = torch.autograd.Variable(im_info.cuda())
@@ -142,7 +150,7 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description="imsitu VSRL. Training, evaluation and prediction.")
     parser.add_argument("--gpuid", default=-1, help="put GPU id > -1 in GPU mode", type=int)
-    parser.add_argument('--cnn_pretrained', default='/Users/thilinicooray/Downloads/coco_2014_train+coco_2014_valminusminival/vgg16_faster_rcnn_iter_1190000.pth')
+    parser.add_argument('--cnn_pretrained', default='/home/thilini/sem-img/VSRL/pretrained_models/faster_rcnn_1_11_416.pth')
 
     args = parser.parse_args()
 
@@ -154,11 +162,11 @@ def main():
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder)
 
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=1, shuffle=True, num_workers=3)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=3, shuffle=True, num_workers=3)
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder)
-    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=1, shuffle=True, num_workers=3)
+    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=3, shuffle=True, num_workers=3)
 
     model = graph_baseline.baseline(encoder, args.gpuid, args.cnn_pretrained)
 
