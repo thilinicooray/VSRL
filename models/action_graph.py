@@ -39,8 +39,8 @@ class action_graph(nn.Module):
     def forward(self, input):
 
         #init hidden state with zeroes
-        vert_state = torch.zeros(input[0].size(0), self.self.vert_state_dim)
-        edge_state = torch.zeros(input[1].size(0), self.self.edge_state_dim)
+        vert_state = torch.zeros(input[0].size(0), self.vert_state_dim)
+        edge_state = torch.zeros(input[1].size(0), self.edge_state_dim)
 
         vert_state = self.vert_gru(input[0], vert_state)
         edge_state = self.edge_gru(input[1], edge_state)
