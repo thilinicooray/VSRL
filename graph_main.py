@@ -131,8 +131,7 @@ def eval(model, dev_loader, encoder, gpu_mode):
     top1 = imsitu_scorer(encoder, 1, 3)
     top5 = imsitu_scorer(encoder, 5, 3)
     mx = len(dev_loader)
-    for i, (im_data, im_info, gt_boxes, num_boxes, verb, roles, labels) in enumerate(train_loader):
-        total_steps += 1
+    for i, (im_data, im_info, gt_boxes, num_boxes, verb, roles, labels) in enumerate(dev_loader):
         im_data = torch.squeeze(im_data,0)
         im_info = torch.squeeze(im_info,0)
         gt_boxes = torch.squeeze(gt_boxes,0)
@@ -140,14 +139,6 @@ def eval(model, dev_loader, encoder, gpu_mode):
         verb = torch.squeeze(verb,0)
         roles = torch.squeeze(roles,0)
         labels = torch.squeeze(labels,0)
-
-        print('batch details \n\timdata: ', im_data.size())
-        print('\tim_info: ', im_info.size())
-        print('\tgt_boxes: ', gt_boxes.size())
-        print('\tnum_boxes: ', num_boxes.size())
-        print('\tverb: ', verb.size())
-        print('\troles: ', roles.size())
-        print('\tlabels: ', labels.size())
 
         if gpu_mode >= 0:
             im_data = torch.autograd.Variable(im_data.cuda())
