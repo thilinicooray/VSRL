@@ -19,9 +19,8 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
 
     print('init param data check :')
     for f in model.parameters():
-        print('init data and size')
-        print(f.data)
-        print(f.data.size())
+        if f.requires_grad:
+            print(f.data.size())
 
 
     for epoch in range(max_epoch):
