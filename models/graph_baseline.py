@@ -141,7 +141,7 @@ class baseline(nn.Module):
         print('v tensor', verb_tensor.size())
         target = torch.max(verb_tensor, 1)[1]
         print('v gold', target)
-        verb_loss = criterion(verb_pred, target)
+        verb_loss = criterion(torch.unsqueeze(verb_pred, 0), target)
         #this is a multi label classification problem
         loss = 0
         for index in range(gt_labels.size()[0]):
