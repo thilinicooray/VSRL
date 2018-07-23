@@ -96,10 +96,13 @@ class baseline(nn.Module):
         print('cnn out size', img_embedding.size())
 
         #initialize verb node with summation of all region feature vectors
-        verb_init = torch.sum(img_embedding,0)
+        verb_init = torch.sum(torch.squeeze(img_embedding, 0),0)
+        print('verb init :', verb_init.size())
         vert_init = torch.cat((verb_init,img_embedding),0)
         #initialize each edge with verb + respective region feature vector
         edge_init = img_embedding + verb_init
+
+        print('input to graph :', vert_init.size(), edge_init.size())
 
         vert_states, edge_states = self.graph((vert_init,edge_init))
 

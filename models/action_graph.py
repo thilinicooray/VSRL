@@ -9,7 +9,7 @@ from . import utils
 class action_graph(nn.Module):
     def __init__(self, num_regions, num_steps):
         super(action_graph,self).__init__()
-        
+
         self.num_regions = num_regions
         self.num_steps = num_steps
         self.vert_state_dim = 512
