@@ -11,7 +11,7 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
     model.train()
     train_loss = 0
     total_steps = 0
-    print_freq = 50
+    print_freq = 10
     dev_loss_list = []
 
     top1 = imsitu_scorer(encoder, 1, 3)
@@ -65,7 +65,7 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
             verb_predict, role_predict = model(im_data, im_info, gt_boxes, num_boxes, verb, roles)
 
             loss = model.calculate_loss(verb_predict, verb, role_predict, labels)
-            #print('current batch loss = ', loss)
+            print('current loss = ', loss)
 
             optimizer.zero_grad()
             loss.backward()
