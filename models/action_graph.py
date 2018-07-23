@@ -17,13 +17,13 @@ class action_graph(nn.Module):
 
         self.vert_gru = nn.GRUCell(self.vert_state_dim, self.vert_state_dim)
         self.edge_gru = nn.GRUCell(self.edge_state_dim, self.edge_state_dim)
+
         #todo: check gru param init. code resets, but not sure
 
         self.edge_att = nn.Sequential(
             nn.Linear(self.edge_state_dim * 2, 1),
             nn.Sigmoid(),
             nn.LogSoftmax()
-
         )
 
         self.vert_att = nn.Sequential(
@@ -37,8 +37,13 @@ class action_graph(nn.Module):
 
 
     def forward(self, input):
-        vert_state = self.vert_gru(input[0])
-        edge_state = self.edge_gru(input[1])
+
+        #init hidden state with zeroes
+        vert_state = torch.zeros(input[0].size(0), self.self.vert_state_dim)
+        edge_state = torch.zeros(input[1].size(0), self.self.edge_state_dim)
+
+        vert_state = self.vert_gru(input[0], vert_state)
+        edge_state = self.edge_gru(input[1], edge_state)
 
         #todo: check whether this way is correct, TF code uses a separate global var to keep hidden state
         for i in range(self.num_steps):
@@ -47,7 +52,6 @@ class action_graph(nn.Module):
 
             edge_state = self.edge_gru(edge_context, edge_state)
             vert_state = self.vert_gru(vert_context, vert_state)
-
 
         return vert_state, edge_state
 

@@ -100,7 +100,7 @@ class baseline(nn.Module):
         print('verb init :', verb_init.size())
         vert_init = torch.cat((torch.unsqueeze(verb_init, 0),torch.squeeze(img_embedding, 0)),0)
         #initialize each edge with verb + respective region feature vector
-        edge_init = img_embedding + verb_init
+        edge_init = torch.squeeze(img_embedding, 0) + verb_init
 
         print('input to graph :', vert_init.size(), edge_init.size())
 
