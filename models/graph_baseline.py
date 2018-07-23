@@ -139,7 +139,8 @@ class baseline(nn.Module):
         #loss = verb_loss + c.entropy for roles, for all 3 ann per image.
         verb_tensor = torch.unsqueeze(gt_verbs, 0)
         print('v tensor', verb_tensor.size())
-        target = torch.max(verb_tensor)[1]
+        target = torch.max(verb_tensor, 1)[1]
+        print('v gold', target)
         verb_loss = criterion(verb_pred, target)
         #this is a multi label classification problem
         loss = 0
