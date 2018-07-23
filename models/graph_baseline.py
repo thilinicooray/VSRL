@@ -137,8 +137,9 @@ class baseline(nn.Module):
     def calculate_loss(self, verb_pred, gt_verbs, role_label_pred, gt_labels):
         criterion = nn.CrossEntropyLoss()
         #loss = verb_loss + c.entropy for roles, for all 3 ann per image.
-
-        target = torch.max(torch.unsqueeze(gt_verbs, 0))[1]
+        verb_tensor = torch.unsqueeze(gt_verbs, 0)
+        print('v tensor', verb_tensor.size())
+        target = torch.max(verb_tensor)[1]
         verb_loss = criterion(verb_pred, target)
         #this is a multi label classification problem
         loss = 0
