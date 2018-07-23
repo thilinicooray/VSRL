@@ -27,7 +27,9 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
     for epoch in range(max_epoch):
         #print('current sample : ', i, img.size(), verb.size(), roles.size(), labels.size())
         #sizes batch_size*3*height*width, batch*504*1, batch*6*190*1, batch*3*6*lebale_count*1
+        mx = len(train_loader)
         for i, (im_data, im_info, gt_boxes, num_boxes, verb, roles, labels) in enumerate(train_loader):
+            print("epoch{}-{}/{} batches\r".format(epoch,i+1,mx)) ,
             total_steps += 1
             im_data = torch.squeeze(im_data,0)
             im_info = torch.squeeze(im_info,0)
@@ -132,6 +134,7 @@ def eval(model, dev_loader, encoder, gpu_mode):
     top5 = imsitu_scorer(encoder, 5, 3)
     mx = len(dev_loader)
     for i, (im_data, im_info, gt_boxes, num_boxes, verb, roles, labels) in enumerate(dev_loader):
+        print("{}/{} batches\r".format(i+1,mx)) ,
         im_data = torch.squeeze(im_data,0)
         im_info = torch.squeeze(im_info,0)
         gt_boxes = torch.squeeze(gt_boxes,0)
