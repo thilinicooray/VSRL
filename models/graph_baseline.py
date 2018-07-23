@@ -78,7 +78,7 @@ class baseline(nn.Module):
         self.role_lookup_table = nn.Linear(self.num_roles, self.embedding_size)
 
         self.role_att = nn.Sequential(
-            nn.Linear(self.embedding_size * 3, 1),
+            nn.Linear(self.embedding_size * 2, 1),
             nn.Sigmoid(),
             nn.LogSoftmax()
         )
@@ -120,13 +120,17 @@ class baseline(nn.Module):
         for role_embd in role_embedding:
             print('role embed size :', role_embd.size())
             role_expanded_state = role_embd.expand(edge_states.size(0), role_embd.size(0))
+            print('expand :', role_expanded_state.size(), vert_states[1:].size())
             role_concat = torch.cat((role_expanded_state, vert_states[1:]), 1)
+            print('concat :', role_concat.size())
             att_weighted_role_per_region = torch.mul(self.role_att(role_concat), vert_states[1:])
             att_weighted_role = torch.sum(att_weighted_role_per_region, 0)
             role_label_embd_list.append(att_weighted_role)
 
         label_embed = torch.stack(role_label_embd_list)
         role_label_predict = self.role_module(label_embed)
+
+        print('out from forward :', verb_predict.size(), role_label_predict.size())
 
         return verb_predict, role_label_predict
 
