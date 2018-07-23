@@ -99,7 +99,7 @@ class action_graph(nn.Module):
         att_weighted_region = torch.mul(self.edge_att(region_concat), edge_state)
         att_weighted_verb = torch.sum(att_weighted_verb_per_edge, 0)
 
-        vert_ctx = torch.cat((att_weighted_verb,att_weighted_region), 0)
+        vert_ctx = torch.cat((torch.unsqueeze(att_weighted_verb,0),att_weighted_region), 0)
 
         print('vert context :', vert_ctx.size())
         return vert_ctx
