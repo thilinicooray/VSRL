@@ -7,13 +7,14 @@ import torch
 from . import utils
 
 class action_graph(nn.Module):
-    def __init__(self, num_regions, num_steps):
+    def __init__(self, num_regions, num_steps, gpu_mode):
         super(action_graph,self).__init__()
 
         self.num_regions = num_regions
         self.num_steps = num_steps
         self.vert_state_dim = 512
         self.edge_state_dim = 512
+        self.gpu_mode= gpu_mode
 
         self.vert_gru = nn.GRUCell(self.vert_state_dim, self.vert_state_dim)
         self.edge_gru = nn.GRUCell(self.edge_state_dim, self.edge_state_dim)
@@ -38,9 +39,13 @@ class action_graph(nn.Module):
 
     def forward(self, input):
 
-        #init hidden state with zeroes
+        #init hidden state with zeros
         vert_state = torch.zeros(input[0].size(0), self.vert_state_dim)
         edge_state = torch.zeros(input[1].size(0), self.edge_state_dim)
+
+        if self.gpu_mode >= 0:
+            vert_state = vert_state.to(torch.device('cuda'))
+            edge_state = edge_state.to(torch.device('cuda'))
 
         vert_state = self.vert_gru(input[0], vert_state)
         edge_state = self.edge_gru(input[1], edge_state)

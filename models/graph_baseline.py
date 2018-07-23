@@ -66,7 +66,7 @@ class baseline(nn.Module):
             exit()
         self.img_size = self.cnn.rep_size()
 
-        self.graph = action_graph(cfg.TRAIN.RPN_POST_NMS_TOP_N, self.num_graph_steps)
+        self.graph = action_graph(cfg.TRAIN.RPN_POST_NMS_TOP_N, self.num_graph_steps, self.gpu_mode)
 
         self.verb_module = nn.Sequential(
             nn.ReLU(),
