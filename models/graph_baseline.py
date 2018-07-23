@@ -98,7 +98,7 @@ class baseline(nn.Module):
         #initialize verb node with summation of all region feature vectors
         verb_init = torch.sum(torch.squeeze(img_embedding, 0),0)
         print('verb init :', verb_init.size())
-        vert_init = torch.cat((verb_init,img_embedding),0)
+        vert_init = torch.cat((torch.unsqueeze(verb_init, 0),torch.squeeze(img_embedding, 0)),0)
         #initialize each edge with verb + respective region feature vector
         edge_init = img_embedding + verb_init
 
