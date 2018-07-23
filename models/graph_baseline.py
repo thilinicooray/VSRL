@@ -40,7 +40,7 @@ class frcnn_pretrained_vgg_modified(nn.Module):
     def rep_size(self): return 512
 
     def forward(self, im_data, im_info, gt_boxes, num_boxes):
-        print('frcnn original size:',self.fasterRCNN(im_data, im_info, gt_boxes, num_boxes).size())
+        #print('frcnn original size:',self.fasterRCNN(im_data, im_info, gt_boxes, num_boxes).size())
         return self.dropout2(self.relu2(self.lin2(self.dropout1(self.relu1(self.lin1(self.fasterRCNN(im_data, im_info, gt_boxes, num_boxes)))))))
 
 
@@ -93,19 +93,19 @@ class baseline(nn.Module):
 
         img_embedding = self.cnn(im_data, im_info, gt_boxes, num_boxes)#200x512
         #img_embedding_adjusted = self.img_embedding_layer(img_embedding)
-        print('cnn out size', img_embedding.size())
+        #print('cnn out size', img_embedding.size())
 
         #initialize verb node with summation of all region feature vectors
         verb_init = torch.sum(torch.squeeze(img_embedding, 0),0)
-        print('verb init :', verb_init.size())
+        #print('verb init :', verb_init.size())
         vert_init = torch.cat((torch.unsqueeze(verb_init, 0),torch.squeeze(img_embedding, 0)),0)
         #initialize each edge with verb + respective region feature vector
         edge_init = torch.squeeze(img_embedding, 0) + verb_init
 
-        print('input to graph :', vert_init.size(), edge_init.size())
+        #print('input to graph :', vert_init.size(), edge_init.size())
 
         vert_states, edge_states = self.graph((vert_init,edge_init))
-        print('out from graph :', vert_states.size(), edge_states.size())
+        #print('out from graph :', vert_states.size(), edge_states.size())
 
         verb_predict = self.verb_module(vert_states[0])
 
@@ -118,11 +118,11 @@ class baseline(nn.Module):
         #for attention, first try with node only
         #todo: use edge for this calculation
         for role_embd in role_embedding:
-            print('role embed size :', role_embd.size())
+            #print('role embed size :', role_embd.size())
             role_expanded_state = role_embd.expand(edge_states.size(0), role_embd.size(0))
-            print('expand :', role_expanded_state.size(), vert_states[1:].size())
+            #print('expand :', role_expanded_state.size(), vert_states[1:].size())
             role_concat = torch.cat((role_expanded_state, vert_states[1:]), 1)
-            print('concat :', role_concat.size())
+            #print('concat :', role_concat.size())
             att_weighted_role_per_region = torch.mul(self.role_att(role_concat), vert_states[1:])
             att_weighted_role = torch.sum(att_weighted_role_per_region, 0)
             role_label_embd_list.append(att_weighted_role)
@@ -130,7 +130,7 @@ class baseline(nn.Module):
         label_embed = torch.stack(role_label_embd_list)
         role_label_predict = self.role_module(label_embed)
 
-        print('out from forward :', verb_predict.size(), role_label_predict.size())
+        #print('out from forward :', verb_predict.size(), role_label_predict.size())
 
         return verb_predict, role_label_predict
 
@@ -138,9 +138,9 @@ class baseline(nn.Module):
         criterion = nn.CrossEntropyLoss()
         #loss = verb_loss + c.entropy for roles, for all 3 ann per image.
         verb_tensor = torch.unsqueeze(gt_verbs, 0)
-        print('v tensor', verb_tensor.size())
+        #print('v tensor', verb_tensor.size())
         target = torch.max(verb_tensor, 1)[1]
-        print('v gold', target)
+        #print('v gold', target)
         verb_loss = criterion(torch.unsqueeze(verb_pred, 0), target)
         #this is a multi label classification problem
         loss = 0

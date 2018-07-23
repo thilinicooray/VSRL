@@ -7,11 +7,11 @@ from models import graph_baseline
 import os
 from models import utils
 
-def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, encoder, gpu_mode, eval_frequency=500):
+def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, encoder, gpu_mode, eval_frequency=32000):
     model.train()
     train_loss = 0
     total_steps = 0
-    print_freq = 10
+    print_freq = 3200
     dev_loss_list = []
 
     top1 = imsitu_scorer(encoder, 1, 3)
@@ -37,13 +37,13 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
             roles = torch.squeeze(roles,0)
             labels = torch.squeeze(labels,0)
 
-            print('batch details \n\timdata: ', im_data.size())
+            '''print('batch details \n\timdata: ', im_data.size())
             print('\tim_info: ', im_info.size())
             print('\tgt_boxes: ', gt_boxes.size())
             print('\tnum_boxes: ', num_boxes.size())
             print('\tverb: ', verb.size())
             print('\troles: ', roles.size())
-            print('\tlabels: ', labels.size())
+            print('\tlabels: ', labels.size())'''
 
             if gpu_mode >= 0:
                 im_data = torch.autograd.Variable(im_data.cuda())
@@ -65,7 +65,7 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
             verb_predict, role_predict = model(im_data, im_info, gt_boxes, num_boxes, verb, roles)
 
             loss = model.calculate_loss(verb_predict, verb, role_predict, labels)
-            print('current loss = ', loss)
+            #print('current loss = ', loss)
 
             optimizer.zero_grad()
             loss.backward()
@@ -131,26 +131,50 @@ def eval(model, dev_loader, encoder, gpu_mode):
     top1 = imsitu_scorer(encoder, 1, 3)
     top5 = imsitu_scorer(encoder, 5, 3)
     mx = len(dev_loader)
-    for i, (img, verb, roles, labels) in enumerate(dev_loader):
-        print("{}/{} batches\r".format(i+1,mx)) ,
+    for i, (im_data, im_info, gt_boxes, num_boxes, verb, roles, labels) in enumerate(train_loader):
+        total_steps += 1
+        im_data = torch.squeeze(im_data,0)
+        im_info = torch.squeeze(im_info,0)
+        gt_boxes = torch.squeeze(gt_boxes,0)
+        num_boxes = torch.squeeze(num_boxes,0)
+        verb = torch.squeeze(verb,0)
+        roles = torch.squeeze(roles,0)
+        labels = torch.squeeze(labels,0)
+
+        print('batch details \n\timdata: ', im_data.size())
+        print('\tim_info: ', im_info.size())
+        print('\tgt_boxes: ', gt_boxes.size())
+        print('\tnum_boxes: ', num_boxes.size())
+        print('\tverb: ', verb.size())
+        print('\troles: ', roles.size())
+        print('\tlabels: ', labels.size())
+
         if gpu_mode >= 0:
-            img = torch.autograd.Variable(img.cuda())
-            verb = torch.autograd.Variable(verb.cuda())
+            im_data = torch.autograd.Variable(im_data.cuda())
+            im_info = torch.autograd.Variable(im_info.cuda())
+            gt_boxes = torch.autograd.Variable(gt_boxes.cuda())
+            num_boxes = torch.autograd.Variable(num_boxes.cuda())
             roles = torch.autograd.Variable(roles.cuda())
+            verb = torch.autograd.Variable(verb.cuda())
             labels = torch.autograd.Variable(labels.cuda())
         else:
-            img = torch.autograd.Variable(img)
+            im_data = torch.autograd.Variable(im_data)
+            im_info = torch.autograd.Variable(im_info)
+            gt_boxes = torch.autograd.Variable(gt_boxes)
+            num_boxes = torch.autograd.Variable(num_boxes)
             verb = torch.autograd.Variable(verb)
             roles = torch.autograd.Variable(roles)
             labels = torch.autograd.Variable(labels)
-        #todo: implement beam search for eval mode
-        verb_predict, role_predict = model(img, verb, roles)
+
+        verb_predict, role_predict = model(im_data, im_info, gt_boxes, num_boxes, verb, roles)
 
         loss = model.calculate_loss(verb_predict, verb, role_predict, labels)
         dev_loss += loss.data
 
-        top1.add_point(verb_predict, verb, role_predict, labels)
-        top5.add_point(verb_predict, verb, role_predict, labels)
+        top1.add_point(torch.unsqueeze(verb_predict,0), torch.unsqueeze(verb,0),
+                       torch.unsqueeze(role_predict,0), torch.unsqueeze(labels,0))
+        top5.add_point(torch.unsqueeze(verb_predict,0), torch.unsqueeze(verb,0),
+                       torch.unsqueeze(role_predict,0), torch.unsqueeze(labels,0))
 
     return top1, top5, dev_loss
 
@@ -184,7 +208,7 @@ def main():
         model.cuda()
 
     #lr, weight decay user param
-    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad,model.parameters()), lr=0.01, weight_decay=5e-4)
+    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad,model.parameters()), lr=0.001, weight_decay=5e-4)
     #gradient clipping, grad check
 
     print('Model training started!')

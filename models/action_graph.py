@@ -75,7 +75,7 @@ class action_graph(nn.Module):
         region_vert_state = vert_state[1:]
         verb_expanded_state = verb_vert_state.expand(region_vert_state.size(0), verb_vert_state.size(0))
 
-        print('vert shapes', verb_vert_state.size(), region_vert_state.size(), verb_expanded_state.size())
+        #print('vert shapes', verb_vert_state.size(), region_vert_state.size(), verb_expanded_state.size())
 
         verb_concat = torch.cat((verb_expanded_state, edge_state), 1)
         region_concat = torch.cat((region_vert_state, edge_state), 1)
@@ -90,7 +90,7 @@ class action_graph(nn.Module):
         region_vert_state = vert_state[1:]
         verb_expanded_state = verb_vert_state.expand(region_vert_state.size(0), verb_vert_state.size(0))
 
-        print('vert shapes', verb_vert_state.size(), region_vert_state.size(), verb_expanded_state.size())
+        #print('vert shapes', verb_vert_state.size(), region_vert_state.size(), verb_expanded_state.size())
 
         verb_concat = torch.cat((verb_expanded_state, edge_state), 1)
         region_concat = torch.cat((region_vert_state, edge_state), 1)
@@ -101,7 +101,7 @@ class action_graph(nn.Module):
 
         vert_ctx = torch.cat((torch.unsqueeze(att_weighted_verb,0),att_weighted_region), 0)
 
-        print('vert context :', vert_ctx.size())
+        #print('vert context :', vert_ctx.size())
         return vert_ctx
 
 
