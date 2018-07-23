@@ -33,6 +33,9 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
             im_info = torch.squeeze(im_info,0)
             gt_boxes = torch.squeeze(gt_boxes,0)
             num_boxes = torch.squeeze(num_boxes,0)
+            verb = torch.squeeze(verb,0)
+            roles = torch.squeeze(roles,0)
+            labels = torch.squeeze(labels,0)
 
             print('batch details \n\timdata: ', im_data.size())
             print('\tim_info: ', im_info.size())
