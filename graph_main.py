@@ -17,10 +17,10 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
     top1 = imsitu_scorer(encoder, 1, 3)
     top5 = imsitu_scorer(encoder, 5, 3)
 
-    print('init param data check :')
+    '''print('init param data check :')
     for f in model.parameters():
         if f.requires_grad:
-            print(f.data.size())
+            print(f.data.size())'''
 
 
     for epoch in range(max_epoch):
@@ -72,12 +72,12 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
             loss.backward()
             optimizer.step()
 
-            print('grad check :')
+            '''print('grad check :')
             for f in model.parameters():
                 print('data is')
                 print(f.data)
                 print('grad is')
-                print(f.grad)
+                print(f.grad)'''
 
             train_loss += loss.data
 
