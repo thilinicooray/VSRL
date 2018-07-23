@@ -21,6 +21,7 @@ class frcnn_pretrained_vgg_modified(nn.Module):
         updated_frcnn_dict.update(filtered_pretrained_dict)
 
         self.fasterRCNN.load_state_dict(updated_frcnn_dict)
+        self.fasterRCNN.eval()
         #print('model', self.frcnn_vgg)
 
         #self.frcnn_vgg_features = self.frcnn_vgg.features
@@ -29,10 +30,10 @@ class frcnn_pretrained_vgg_modified(nn.Module):
         #nn.Dropout(),
         self.lin1 = nn.Linear(4096, 1024)
         self.relu1 = nn.ReLU(True)
-        self.dropout1 = nn.Dropout()
+        #self.dropout1 = nn.Dropout()
         self.lin2 =  nn.Linear(1024, 512)
         self.relu2 = nn.ReLU(True)
-        self.dropout2 = nn.Dropout()
+        #self.dropout2 = nn.Dropout()
 
         utils.init_weight(self.lin1)
         utils.init_weight(self.lin2)
@@ -41,7 +42,7 @@ class frcnn_pretrained_vgg_modified(nn.Module):
 
     def forward(self, im_data, im_info, gt_boxes, num_boxes):
         #print('frcnn original size:',self.fasterRCNN(im_data, im_info, gt_boxes, num_boxes).size())
-        return self.dropout2(self.relu2(self.lin2(self.dropout1(self.relu1(self.lin1(self.fasterRCNN(im_data, im_info, gt_boxes, num_boxes)))))))
+        return self.relu2(self.lin2(self.relu1(self.lin1(self.fasterRCNN(im_data, im_info, gt_boxes, num_boxes)))))
 
 
 class baseline(nn.Module):
@@ -60,7 +61,6 @@ class baseline(nn.Module):
         #get the vision module
         if cnn_type == 'faster_rcnn_vgg' :
             self.cnn = frcnn_pretrained_vgg_modified(pretrained_cnn_path)
-            self.cnn.eval()
         else:
             print('unknown base network')
             exit()
@@ -79,7 +79,7 @@ class baseline(nn.Module):
 
         self.role_att = nn.Sequential(
             nn.Linear(self.embedding_size * 2, 1),
-            nn.Sigmoid(),
+            nn.Tanh(),
             nn.LogSoftmax()
         )
 
