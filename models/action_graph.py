@@ -4,7 +4,7 @@ from an edge. region nodes are not connected with each other directly
 
 import torch.nn as nn
 import torch
-import utils
+from . import utils
 
 class action_graph(nn.Module):
     def __init__(self, num_regions, num_steps):
