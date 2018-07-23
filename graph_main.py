@@ -17,11 +17,11 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
     top1 = imsitu_scorer(encoder, 1, 3)
     top5 = imsitu_scorer(encoder, 5, 3)
 
-    '''print('init param data check :')
+    print('init param data check :')
     for f in model.parameters():
         print('init data and size')
         print(f.data)
-        print(f.data.size())'''
+        print(f.data.size())
 
 
     for epoch in range(max_epoch):
@@ -193,7 +193,7 @@ def main():
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder)
-    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=3, shuffle=True, num_workers=3)
+    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=1, shuffle=True, num_workers=3)
 
     model = graph_baseline.baseline(encoder, args.gpuid, args.cnn_pretrained)
 
