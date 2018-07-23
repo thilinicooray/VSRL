@@ -138,7 +138,7 @@ class baseline(nn.Module):
         criterion = nn.CrossEntropyLoss()
         #loss = verb_loss + c.entropy for roles, for all 3 ann per image.
 
-        target = torch.max(gt_verbs)[1]
+        target = torch.max(torch.unsqueeze(gt_verbs, 0))[1]
         verb_loss = criterion(verb_pred, target)
         #this is a multi label classification problem
         loss = 0
