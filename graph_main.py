@@ -73,12 +73,12 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
             loss.backward()
             optimizer.step()
 
-            '''print('grad check :')
+            print('grad check :')
             for f in model.parameters():
                 print('data is')
                 print(f.data)
                 print('grad is')
-                print(f.grad)'''
+                print(f.grad)
 
             train_loss += loss.data
 
