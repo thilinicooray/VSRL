@@ -105,6 +105,7 @@ class baseline(nn.Module):
         print('input to graph :', vert_init.size(), edge_init.size())
 
         vert_states, edge_states = self.graph((vert_init,edge_init))
+        print('out from graph :', vert_states.size(), edge_states.size())
 
         verb_predict = self.verb_module(vert_states[0])
 
@@ -117,6 +118,7 @@ class baseline(nn.Module):
         #for attention, first try with node only
         #todo: use edge for this calculation
         for role_embd in role_embedding:
+            print('role embed size :', role_embd.size())
             role_expanded_state = role_embd.expand(edge_states.size(0), role_embd.size(0))
             role_concat = torch.cat((role_expanded_state, vert_states[1:]), 1)
             att_weighted_role_per_region = torch.mul(self.role_att(role_concat), vert_states[1:])
