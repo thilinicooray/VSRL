@@ -19,6 +19,14 @@ class action_graph(nn.Module):
         self.vert_gru = nn.GRUCell(self.vert_state_dim, self.vert_state_dim)
         self.edge_gru = nn.GRUCell(self.edge_state_dim, self.edge_state_dim)
 
+        #init hidden state with zeros
+        self.vert_state = torch.zeros(num_regions + 1, self.vert_state_dim)
+        self.edge_state = torch.zeros(num_regions, self.edge_state_dim)
+
+        if self.gpu_mode >= 0:
+            self.vert_state = self.vert_state.to(torch.device('cuda'))
+            self.edge_state = self.edge_state.to(torch.device('cuda'))
+
         #todo: check gru param init. code resets, but not sure
 
         self.edge_att = nn.Sequential(
@@ -39,14 +47,6 @@ class action_graph(nn.Module):
 
     def forward(self, input_):
 
-        #init hidden state with zeros
-        vert_state = torch.zeros(input_[0].size(1), self.vert_state_dim)
-        edge_state = torch.zeros(input_[1].size(1), self.edge_state_dim)
-
-        if self.gpu_mode >= 0:
-            vert_state = vert_state.to(torch.device('cuda'))
-            edge_state = edge_state.to(torch.device('cuda'))
-
         batch_size = input_[0].size(0)
         vert_input = input_[0]
         edge_input = input_[1]
@@ -55,21 +55,19 @@ class action_graph(nn.Module):
         edge_state_list = []
         #todo: can this be parallelized?
         for i in range(batch_size):
-            vert_state.fill_(0)
-            edge_state.fill_(0)
-            vert_state = self.vert_gru(vert_input[i], vert_state)
-            edge_state = self.edge_gru(edge_input[i], edge_state)
+            self.vert_state = self.vert_gru(vert_input[i], self.vert_state)
+            self.edge_state = self.edge_gru(edge_input[i], self.edge_state)
 
             #todo: check whether this way is correct, TF code uses a separate global var to keep hidden state
             for i in range(self.num_steps):
-                edge_context = self.get_edge_context(edge_state, vert_state)
-                vert_context = self.get_vert_context(vert_state, edge_state)
+                edge_context = self.get_edge_context(self.edge_state, self.vert_state)
+                vert_context = self.get_vert_context(self.vert_state, self.edge_state)
 
-                edge_state = self.edge_gru(edge_context, edge_state)
-                vert_state = self.vert_gru(vert_context, vert_state)
+                self.edge_state = self.edge_gru(edge_context, self.edge_state)
+                self.vert_state = self.vert_gru(vert_context, self.vert_state)
 
-            vert_state_list.append(vert_state)
-            edge_state_list.append(edge_state)
+            vert_state_list.append(self.vert_state)
+            edge_state_list.append(self.edge_state)
 
         return torch.stack(vert_state_list), torch.stack(edge_state_list)
 
