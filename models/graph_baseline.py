@@ -108,7 +108,7 @@ class baseline(nn.Module):
         verb_init = torch.sum(img_embedding_batch,1)
         print('verb_init', verb_init.size())
 
-        vert_init = torch.stack((torch.unsqueeze(verb_init, 1),img_embedding_batch),2)
+        vert_init = torch.stack((torch.unsqueeze(verb_init, 1),img_embedding_batch),1)
         print('vert_init :', vert_init.size())
         #initialize each edge with verb + respective region feature vector
         edge_init = img_embedding_batch + verb_init
