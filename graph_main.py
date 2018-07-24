@@ -81,10 +81,8 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
 
             train_loss += loss.data
 
-            top1.add_point(torch.unsqueeze(verb_predict,0), torch.unsqueeze(verb,0),
-                           torch.unsqueeze(role_predict,0), torch.unsqueeze(labels,0))
-            top5.add_point(torch.unsqueeze(verb_predict,0), torch.unsqueeze(verb,0),
-                           torch.unsqueeze(role_predict,0), torch.unsqueeze(labels,0))
+            top1.add_point(verb_predict, verb, role_predict, labels)
+            top5.add_point(verb_predict, verb, role_predict, labels)
 
 
             if total_steps % print_freq == 0:
@@ -164,10 +162,8 @@ def eval(model, dev_loader, encoder, gpu_mode):
 
             verb_predict, role_predict = model(im_data, im_info, gt_boxes, num_boxes, verb, roles)
 
-            top1.add_point(torch.unsqueeze(verb_predict,0), torch.unsqueeze(verb,0),
-                           torch.unsqueeze(role_predict,0), torch.unsqueeze(labels,0))
-            top5.add_point(torch.unsqueeze(verb_predict,0), torch.unsqueeze(verb,0),
-                           torch.unsqueeze(role_predict,0), torch.unsqueeze(labels,0))
+            top1.add_point(verb_predict, verb, role_predict, labels)
+            top5.add_point(verb_predict, verb, role_predict, labels)
 
     return top1, top5
 
