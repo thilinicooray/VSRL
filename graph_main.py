@@ -7,7 +7,7 @@ from models import graph_baseline
 import os
 from models import utils
 
-def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, encoder, gpu_mode, eval_frequency=250):
+def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, encoder, gpu_mode, eval_frequency=15000):
     model.train()
     train_loss = 0
     total_steps = 0
@@ -195,8 +195,8 @@ def main():
     if args.gpuid >= 0:
         #print('GPU enabled')
         model.cuda()
-    lr_set = [0.01, 0.001, 0.0001, 0.00001]
-    decay_set = [0.1, 0.01,0.001, 0.0001, 0.00001]
+    lr_set = [0.01]
+    decay_set = [0.0001]
 
     for lr in lr_set:
         for decay in decay_set:
@@ -206,7 +206,7 @@ def main():
             #gradient clipping, grad check
 
             print('Model training started!')
-            train(model, train_loader, dev_loader, optimizer,2, 'trained_models', encoder, args.gpuid)
+            train(model, train_loader, dev_loader, optimizer,50, 'trained_models', encoder, args.gpuid)
 
 
 
