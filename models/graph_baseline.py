@@ -98,7 +98,7 @@ class baseline(nn.Module):
         )
 
     def forward(self, im_data, im_info, gt_boxes, num_boxes, verbs, roles):
-        print('input size', images.size())
+        print('input size', im_data.size())
 
         img_embedding_batch = self.cnn(im_data, im_info, gt_boxes, num_boxes)
         #img_embedding_adjusted = self.img_embedding_layer(img_embedding)
