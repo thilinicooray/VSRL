@@ -107,7 +107,8 @@ class baseline(nn.Module):
         #initialize verb node with summation of all region feature vectors
         verb_init = torch.sum(img_embedding_batch,1)
         print('verb_init', verb_init.size())
-        verb_init_expand = verb_init.expand(verb_init.size(0),img_embedding_batch.size(1), verb_init.size(1))
+        verb_init_expand = verb_init.expand(img_embedding_batch.size(1), verb_init.size(0), verb_init.size(1))
+        verb_init_expand = verb_init_expand.transpose(0,1)
         print('verb init :', verb_init.size())
         vert_init = torch.cat((verb_init_expand,img_embedding_batch),2)
         #initialize each edge with verb + respective region feature vector
@@ -128,10 +129,12 @@ class baseline(nn.Module):
 
         #for attention, first try with node only
         #todo: use edge for this calculation
-        role_expanded_state = role_embedding.expand(role_embedding.size(0), role_embedding.size(1),
-                                                    edge_states.size(1), role_embedding.size(2))
-        vert_state_expanded = vert_states.expand(vert_states.size(0), role_embedding.size(1),
-                                               vert_states.size(1), vert_states.size(2))
+        role_expanded_state = role_embedding.expand(role_embedding.size(0), role_embedding.size(1), role_embedding.size(2),
+                                                    edge_states.size(1))
+        role_expanded_state = role_expanded_state.transpose(2,3)
+        vert_state_expanded = vert_states.expand(vert_states.size(0), role_embedding.size(1),role_embedding.size(2),
+                                                 vert_states.size(1))
+        vert_state_expanded = vert_state_expanded.transpose(2,3)
         print('expand :', role_expanded_state.size(), vert_state_expanded.size())
         role_concat = torch.cat((role_expanded_state, vert_state_expanded[:,:,1:]), 3)
         print('cat :', role_concat.size())

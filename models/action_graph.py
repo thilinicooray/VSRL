@@ -73,7 +73,8 @@ class action_graph(nn.Module):
 
         verb_vert_state = vert_state[:,0]
         region_vert_state = vert_state[:,1:]
-        verb_expanded_state = verb_vert_state.expand(verb_vert_state.size(0), region_vert_state.size(0), verb_vert_state.size(1))
+        verb_expanded_state = verb_vert_state.expand(region_vert_state.size(1),verb_vert_state.size(0), verb_vert_state.size(1))
+        verb_expanded_state = verb_expanded_state.transpose(0,1)
 
         print('vert shapes', verb_vert_state.size(), region_vert_state.size(), verb_expanded_state.size())
 
@@ -88,7 +89,8 @@ class action_graph(nn.Module):
     def get_vert_context(self, vert_state, edge_state):
         verb_vert_state = vert_state[:,0]
         region_vert_state = vert_state[:,1:]
-        verb_expanded_state = verb_vert_state.expand(verb_vert_state.size(0), region_vert_state.size(0), verb_vert_state.size(1))
+        verb_expanded_state = verb_vert_state.expand(region_vert_state.size(1),verb_vert_state.size(0), verb_vert_state.size(1))
+        verb_expanded_state = verb_expanded_state.transpose(0,1)
 
         #print('vert shapes', verb_vert_state.size(), region_vert_state.size(), verb_expanded_state.size())
 
