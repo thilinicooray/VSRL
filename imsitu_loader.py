@@ -72,7 +72,7 @@ class imsitu_loader(data.Dataset):
         im_info_np = np.array([[transformed.size(1), transformed.size(2), 1.0]], dtype=np.float32)
 
         #im_data_pt = torch.from_numpy(im_blob)
-        im_data_pt = torch.unsqueeze(transformed, 0)
+        im_data_pt = transformed
         im_info_pt = torch.from_numpy(im_info_np)
 
         #print('add image ', index)
