@@ -71,7 +71,7 @@ class action_graph(nn.Module):
             vert_state_list.append(vert_state)
             edge_state_list.append(edge_state)
 
-        return torch.stack(vert_state_list), torch.stack(edge_state)
+        return torch.stack(vert_state_list), torch.stack(edge_state_list)
 
     def get_edge_context(self, edge_state, vert_state):
         #todo: implement for undirectional, not only have verb-> region direction.
