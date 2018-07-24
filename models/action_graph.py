@@ -48,14 +48,17 @@ class action_graph(nn.Module):
             edge_state = edge_state.to(torch.device('cuda'))
 
         batch_size = input_[0].size(0)
+        vert_input = input_[0]
+        edge_input = input_[1]
+        print('vert and edge input', vert_input.size(), edge_input.size())
         vert_state_list = []
         edge_state_list = []
         #todo: can this be parallelized?
         for i in range(batch_size):
             vert_state.fill_(0)
-            vert_state.fill_(0)
-            vert_state = self.vert_gru(input_[0][i], vert_state)
-            edge_state = self.edge_gru(input_[1][i], edge_state)
+            edge_state.fill_(0)
+            vert_state = self.vert_gru(vert_input[i], vert_state)
+            edge_state = self.edge_gru(edge_input[i], edge_state)
 
             #todo: check whether this way is correct, TF code uses a separate global var to keep hidden state
             for i in range(self.num_steps):
