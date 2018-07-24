@@ -98,23 +98,24 @@ class baseline(nn.Module):
         )
 
     def forward(self, im_data, im_info, gt_boxes, num_boxes, verbs, roles):
-        #print('input size', images.size())
+        print('input size', images.size())
 
         img_embedding_batch = self.cnn(im_data, im_info, gt_boxes, num_boxes)
         #img_embedding_adjusted = self.img_embedding_layer(img_embedding)
-        #print('cnn out size', img_embedding.size())
+        print('cnn out size', img_embedding_batch.size())
 
         #initialize verb node with summation of all region feature vectors
         verb_init = torch.sum(img_embedding_batch,1)
-        #print('verb init :', verb_init.size())
-        vert_init = torch.cat((verb_init,img_embedding_batch),0)
+        verb_init_expand = verb_init.expand(verb_init.size(0),img_embedding_batch.size(1), verb_init.size(1))
+        print('verb init :', verb_init.size())
+        vert_init = torch.cat((verb_init,img_embedding_batch),2)
         #initialize each edge with verb + respective region feature vector
         edge_init = img_embedding_batch + verb_init
 
-        #print('input to graph :', vert_init.size(), edge_init.size())
+        print('input to graph :', vert_init.size(), edge_init.size())
 
         vert_states, edge_states = self.graph((vert_init,edge_init))
-        #print('out from graph :', vert_states.size(), edge_states.size())
+        print('out from graph :', vert_states.size(), edge_states.size())
 
         verb_predict = self.verb_module(vert_states[0])
 
@@ -130,10 +131,13 @@ class baseline(nn.Module):
                                                     edge_states.size(1), role_embedding.size(2))
         vert_state_expanded = vert_states.expand(vert_states.size(0), role_embedding.size(1),
                                                vert_states.size(1), vert_states.size(2))
+        print('expand :', role_expanded_state.size(), vert_state_expanded.size())
         role_concat = torch.cat((role_expanded_state, vert_state_expanded[:,:,1:]), 3)
+        print('cat :', role_concat.size())
 
         att_weighted_role_per_region = torch.mul(self.role_att(role_concat), vert_states[:,:,1:])
         att_weighted_role_embd = torch.sum(att_weighted_role_per_region, 3)
+        print('out from forward :', att_weighted_role_per_region.size(), att_weighted_role_embd.size())
 
         '''for role_embd in role_embedding:
             #print('role embed size :', role_embd.size())
@@ -148,7 +152,7 @@ class baseline(nn.Module):
         label_embed = torch.stack(role_label_embd_list)'''
         role_label_predict = self.role_module(att_weighted_role_embd)
 
-        #print('out from forward :', verb_predict.size(), role_label_predict.size())
+        print('out from forward :', verb_predict.size(), role_label_predict.size())
 
         return verb_predict, role_label_predict
 
