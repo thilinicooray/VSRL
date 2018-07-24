@@ -141,9 +141,10 @@ class baseline(nn.Module):
         role_concat = torch.cat((role_expanded_state, vert_state_expanded[:,:,1:]), 3)
         print('cat :', role_concat.size())
 
-        att_weighted_role_per_region = torch.mul(self.role_att(role_concat), vert_states[:,:,1:])
-        att_weighted_role_embd = torch.sum(att_weighted_role_per_region, 3)
-        print('out from forward :', att_weighted_role_per_region.size(), att_weighted_role_embd.size())
+        att_weighted_role_per_region = torch.mul(self.role_att(role_concat), vert_state_expanded[:,:,1:])
+        print('att :', att_weighted_role_per_region.size())
+        att_weighted_role_embd = torch.sum(att_weighted_role_per_region, 2)
+        print('out from forward :',  att_weighted_role_embd.size())
 
         '''for role_embd in role_embedding:
             #print('role embed size :', role_embd.size())
