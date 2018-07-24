@@ -125,6 +125,7 @@ class baseline(nn.Module):
         #original code use gold verbs to insert to role predict module (only at training )
 
         role_embedding = self.role_lookup_table(roles)
+        print('role_embedding :', role_embedding.size())
 
         role_label_embd_list = []
 
