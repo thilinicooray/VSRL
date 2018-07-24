@@ -44,7 +44,12 @@ class frcnn_pretrained_vgg_modified(nn.Module):
         #print('frcnn original size:',self.fasterRCNN(im_data, im_info, gt_boxes, num_boxes).size())
         #frcnn_out
         with torch.no_grad():
-            frcnn_out = self.fasterRCNN(im_data, im_info, gt_boxes, num_boxes)
+            batch_size = im_data.size(0)
+            batch_region_list = []
+            for i in range(batch_size):
+                img_embedding = self.fasterRCNN(im_data[i], im_info[i], gt_boxes[i], num_boxes[i])#200x512
+                batch_region_list.append(torch.squeeze(img_embedding, 0))
+            frcnn_out = torch.stack(batch_region_list,0)
 
         return self.relu2(self.lin2(self.relu1(self.lin1(frcnn_out))))
 
@@ -95,16 +100,16 @@ class baseline(nn.Module):
     def forward(self, im_data, im_info, gt_boxes, num_boxes, verbs, roles):
         #print('input size', images.size())
 
-        img_embedding = self.cnn(im_data, im_info, gt_boxes, num_boxes)#200x512
+        img_embedding_batch = self.cnn(im_data, im_info, gt_boxes, num_boxes)
         #img_embedding_adjusted = self.img_embedding_layer(img_embedding)
         #print('cnn out size', img_embedding.size())
 
         #initialize verb node with summation of all region feature vectors
-        verb_init = torch.sum(torch.squeeze(img_embedding, 0),0)
+        verb_init = torch.sum(img_embedding_batch,1)
         #print('verb init :', verb_init.size())
-        vert_init = torch.cat((torch.unsqueeze(verb_init, 0),torch.squeeze(img_embedding, 0)),0)
+        vert_init = torch.cat((verb_init,img_embedding_batch),0)
         #initialize each edge with verb + respective region feature vector
-        edge_init = torch.squeeze(img_embedding, 0) + verb_init
+        edge_init = img_embedding_batch + verb_init
 
         #print('input to graph :', vert_init.size(), edge_init.size())
 
@@ -121,7 +126,16 @@ class baseline(nn.Module):
 
         #for attention, first try with node only
         #todo: use edge for this calculation
-        for role_embd in role_embedding:
+        role_expanded_state = role_embedding.expand(role_embedding.size(0), role_embedding.size(1),
+                                                    edge_states.size(1), role_embedding.size(2))
+        vert_state_expanded = vert_states.expand(vert_states.size(0), role_embedding.size(1),
+                                               vert_states.size(1), vert_states.size(2))
+        role_concat = torch.cat((role_expanded_state, vert_state_expanded[:,:,1:]), 3)
+
+        att_weighted_role_per_region = torch.mul(self.role_att(role_concat), vert_states[:,:,1:])
+        att_weighted_role_embd = torch.sum(att_weighted_role_per_region, 3)
+
+        '''for role_embd in role_embedding:
             #print('role embed size :', role_embd.size())
             role_expanded_state = role_embd.expand(edge_states.size(0), role_embd.size(0))
             #print('expand :', role_expanded_state.size(), vert_states[1:].size())
@@ -131,15 +145,15 @@ class baseline(nn.Module):
             att_weighted_role = torch.sum(att_weighted_role_per_region, 0)
             role_label_embd_list.append(att_weighted_role)
 
-        label_embed = torch.stack(role_label_embd_list)
-        role_label_predict = self.role_module(label_embed)
+        label_embed = torch.stack(role_label_embd_list)'''
+        role_label_predict = self.role_module(att_weighted_role_embd)
 
         #print('out from forward :', verb_predict.size(), role_label_predict.size())
 
         return verb_predict, role_label_predict
 
     def calculate_loss(self, verb_pred, gt_verbs, role_label_pred, gt_labels):
-        criterion = nn.CrossEntropyLoss()
+        '''criterion = nn.CrossEntropyLoss()
         #loss = verb_loss + c.entropy for roles, for all 3 ann per image.
         verb_tensor = torch.unsqueeze(gt_verbs, 0)
         #print('v tensor', verb_tensor.size())
@@ -151,7 +165,25 @@ class baseline(nn.Module):
         for index in range(gt_labels.size()[0]):
             loss += criterion(role_label_pred, torch.max(gt_labels[index,:,:],1)[1])
 
-        final_loss = verb_loss + loss
+        final_loss = verb_loss + loss'''
 
+        criterion = nn.CrossEntropyLoss()
+
+
+        target = torch.max(gt_verbs,1)[1]
+        verb_loss = criterion(verb_pred, target)
+        #this is a multi label classification problem
+        batch_size = verb_pred.size()[0]
+        loss = 0
+        for i in range(batch_size):
+            sub_loss = 0
+            for index in range(gt_labels.size()[1]):
+                sub_loss += criterion(role_label_pred[i], torch.max(gt_labels[i,index,:,:],1)[1])
+            loss += sub_loss
+
+
+        final_loss = verb_loss + loss/batch_size
         return final_loss
+
+
 

@@ -17,10 +17,10 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
     top1 = imsitu_scorer(encoder, 1, 3)
     top5 = imsitu_scorer(encoder, 5, 3)
 
-    '''print('init param data check :')
+    print('init param data check :')
     for f in model.parameters():
         if f.requires_grad:
-            print(f.data.size())'''
+            print(f.data.size())
 
 
     for epoch in range(max_epoch):
@@ -30,13 +30,13 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
         for i, (im_data, im_info, gt_boxes, num_boxes, verb, roles, labels) in enumerate(train_loader):
             print("epoch{}-{}/{} batches\r".format(epoch,i+1,mx)) ,
             total_steps += 1
-            im_data = torch.squeeze(im_data,0)
+            '''im_data = torch.squeeze(im_data,0)
             im_info = torch.squeeze(im_info,0)
             gt_boxes = torch.squeeze(gt_boxes,0)
             num_boxes = torch.squeeze(num_boxes,0)
             verb = torch.squeeze(verb,0)
             roles = torch.squeeze(roles,0)
-            labels = torch.squeeze(labels,0)
+            labels = torch.squeeze(labels,0)'''
 
             '''print('batch details \n\timdata: ', im_data.size())
             print('\tim_info: ', im_info.size())
@@ -137,13 +137,13 @@ def eval(model, dev_loader, encoder, gpu_mode):
         mx = len(dev_loader)
         for i, (im_data, im_info, gt_boxes, num_boxes, verb, roles, labels) in enumerate(dev_loader):
             print("{}/{} batches\r".format(i+1,mx)) ,
-            im_data = torch.squeeze(im_data,0)
+            '''im_data = torch.squeeze(im_data,0)
             im_info = torch.squeeze(im_info,0)
             gt_boxes = torch.squeeze(gt_boxes,0)
             num_boxes = torch.squeeze(num_boxes,0)
             verb = torch.squeeze(verb,0)
             roles = torch.squeeze(roles,0)
-            labels = torch.squeeze(labels,0)
+            labels = torch.squeeze(labels,0)'''
 
             if gpu_mode >= 0:
                 im_data = torch.autograd.Variable(im_data.cuda())
@@ -188,11 +188,11 @@ def main():
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder)
 
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=1, shuffle=True, num_workers=10)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=4, shuffle=True, num_workers=3)
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder)
-    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=1, shuffle=True, num_workers=10)
+    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=4, shuffle=True, num_workers=3)
 
     model = graph_baseline.baseline(encoder, args.gpuid, args.cnn_pretrained)
 
