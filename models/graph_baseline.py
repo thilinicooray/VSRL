@@ -47,6 +47,7 @@ class frcnn_pretrained_vgg_modified(nn.Module):
             batch_size = im_data.size(0)
             batch_region_list = []
             for i in range(batch_size):
+                print('size: ', im_data[i].size())
                 img_embedding = self.fasterRCNN(im_data[i], im_info[i], gt_boxes[i], num_boxes[i])#200x512
                 batch_region_list.append(torch.squeeze(img_embedding, 0))
             frcnn_out = torch.stack(batch_region_list,0)
