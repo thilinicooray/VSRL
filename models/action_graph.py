@@ -48,7 +48,8 @@ class action_graph(nn.Module):
             edge_state = edge_state.to(torch.device('cuda'))
 
         batch_size = input[0].size(0)
-        vert_state_list, edge_state_list = []
+        vert_state_list = []
+        edge_state_list = []
         #todo: can this be parallelized?
         for i in range(batch_size):
             input = input[i]
@@ -65,7 +66,8 @@ class action_graph(nn.Module):
                 edge_state = self.edge_gru(edge_context, edge_state)
                 vert_state = self.vert_gru(vert_context, vert_state)
 
-            vert_state_list.append(vert_state), edge_state_list.append(edge_state)
+            vert_state_list.append(vert_state)
+            edge_state_list.append(edge_state)
 
         return torch.stack(vert_state_list), torch.stack(edge_state)
 
