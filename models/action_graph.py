@@ -50,7 +50,7 @@ class action_graph(nn.Module):
         batch_size = input_[0].size(0)
         vert_input = input_[0]
         edge_input = input_[1]
-        print('vert and edge input', vert_input.size(), edge_input.size())
+        #print('vert and edge input', vert_input.size(), edge_input.size())
         vert_state_list = []
         edge_state_list = []
         #todo: can this be parallelized?

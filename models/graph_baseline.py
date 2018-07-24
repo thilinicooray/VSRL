@@ -98,34 +98,34 @@ class baseline(nn.Module):
         )
 
     def forward(self, im_data, im_info, gt_boxes, num_boxes, verbs, roles):
-        print('input size', im_data.size())
+        #print('input size', im_data.size())
 
         img_embedding_batch = self.cnn(im_data, im_info, gt_boxes, num_boxes)
         #img_embedding_adjusted = self.img_embedding_layer(img_embedding)
-        print('cnn out size', img_embedding_batch.size())
+        #print('cnn out size', img_embedding_batch.size())
 
         #initialize verb node with summation of all region feature vectors
         verb_init = torch.sum(img_embedding_batch,1)
-        print('verb_init', verb_init.size(), torch.unsqueeze(verb_init, 1).size())
+        #print('verb_init', verb_init.size(), torch.unsqueeze(verb_init, 1).size())
 
         vert_init = torch.cat((torch.unsqueeze(verb_init, 1),img_embedding_batch),1)
-        print('vert_init :', vert_init.size())
+        #print('vert_init :', vert_init.size())
         #initialize each edge with verb + respective region feature vector
         verb_init_expand = verb_init.expand(img_embedding_batch.size(1), verb_init.size(0), verb_init.size(1))
         verb_init_expand = verb_init_expand.transpose(0,1)
         edge_init = img_embedding_batch + verb_init_expand
 
-        print('input to graph :', vert_init.size(), edge_init.size())
+        #print('input to graph :', vert_init.size(), edge_init.size())
 
         vert_states, edge_states = self.graph((vert_init,edge_init))
-        print('out from graph :', vert_states.size(), edge_states.size())
+        #print('out from graph :', vert_states.size(), edge_states.size())
 
         verb_predict = self.verb_module(vert_states[:,0])
 
         #original code use gold verbs to insert to role predict module (only at training )
 
         role_embedding = self.role_lookup_table(roles)
-        print('role_embedding :', role_embedding.size())
+        #print('role_embedding :', role_embedding.size())
 
         role_label_embd_list = []
 
@@ -137,14 +137,14 @@ class baseline(nn.Module):
         vert_state_expanded = vert_states.expand(role_embedding.size(1),vert_states.size(0), vert_states.size(1),
                                                  vert_states.size(2))
         vert_state_expanded = vert_state_expanded.transpose(0,1)
-        print('expand :', role_expanded_state.size(), vert_state_expanded.size())
+        #print('expand :', role_expanded_state.size(), vert_state_expanded.size())
         role_concat = torch.cat((role_expanded_state, vert_state_expanded[:,:,1:]), 3)
-        print('cat :', role_concat.size())
+        #print('cat :', role_concat.size())
 
         att_weighted_role_per_region = torch.mul(self.role_att(role_concat), vert_state_expanded[:,:,1:])
-        print('att :', att_weighted_role_per_region.size())
+        #print('att :', att_weighted_role_per_region.size())
         att_weighted_role_embd = torch.sum(att_weighted_role_per_region, 2)
-        print('weighted sum :',  att_weighted_role_embd.size())
+        #print('weighted sum :',  att_weighted_role_embd.size())
 
         '''for role_embd in role_embedding:
             #print('role embed size :', role_embd.size())
@@ -159,7 +159,7 @@ class baseline(nn.Module):
         label_embed = torch.stack(role_label_embd_list)'''
         role_label_predict = self.role_module(att_weighted_role_embd)
 
-        print('out from forward :', verb_predict.size(), role_label_predict.size())
+        #print('out from forward :', verb_predict.size(), role_label_predict.size())
 
         return verb_predict, role_label_predict
 
