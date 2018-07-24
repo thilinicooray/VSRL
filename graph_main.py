@@ -7,11 +7,11 @@ from models import graph_baseline
 import os
 from models import utils
 
-def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, encoder, gpu_mode, eval_frequency=32000):
+def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, encoder, gpu_mode, eval_frequency=500):
     model.train()
     train_loss = 0
     total_steps = 0
-    print_freq = 3200
+    print_freq = 50
     dev_score_list = []
 
     top1 = imsitu_scorer(encoder, 1, 3)
