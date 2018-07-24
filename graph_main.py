@@ -7,11 +7,11 @@ from models import graph_baseline
 import os
 from models import utils
 
-def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, encoder, gpu_mode, eval_frequency=500):
+def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, encoder, gpu_mode, eval_frequency=250):
     model.train()
     train_loss = 0
     total_steps = 0
-    print_freq = 50
+    print_freq = 25
     dev_score_list = []
 
     top1 = imsitu_scorer(encoder, 1, 3)
@@ -184,7 +184,7 @@ def main():
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder)
 
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=64, shuffle=True, num_workers=4)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=128, shuffle=True, num_workers=4)
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder)
@@ -197,7 +197,7 @@ def main():
         model.cuda()
 
     #lr, weight decay user param
-    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad,model.parameters()), lr=0.001, weight_decay=5e-4)
+    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad,model.parameters()), lr=0.01)
     #gradient clipping, grad check
 
     print('Model training started!')
