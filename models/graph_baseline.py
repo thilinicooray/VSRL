@@ -134,7 +134,7 @@ class baseline(nn.Module):
         role_expanded_state = role_embedding.expand(edge_states.size(1),role_embedding.size(0), role_embedding.size(1),
                                                     role_embedding.size(2))
         role_expanded_state = role_expanded_state.permute(1,2,0,3)
-        vert_state_expanded = vert_states.expand(role_embedding.size(1),vert_states.size(0), role_embedding.size(1),
+        vert_state_expanded = vert_states.expand(role_embedding.size(1),vert_states.size(0), vert_states.size(1),
                                                  vert_states.size(2))
         vert_state_expanded = vert_state_expanded.transpose(0,1)
         print('expand :', role_expanded_state.size(), vert_state_expanded.size())
