@@ -97,6 +97,8 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
 
                 print('current train loss', train_loss)
                 train_loss = 0
+                top1 = imsitu_scorer(encoder, 1, 3)
+                top5 = imsitu_scorer(encoder, 5, 3)
 
         print('Epoch ', epoch, ' completed!')
 
@@ -111,15 +113,15 @@ def eval(model, dev_loader, encoder, gpu_mode):
     for i, (img, verb, roles, labels) in enumerate(dev_loader):
         print("{}/{} batches\r".format(i+1,mx)) ,
         if gpu_mode >= 0:
-            img = torch.autograd.Variable(img.cuda())
-            verb = torch.autograd.Variable(verb.cuda())
-            roles = torch.autograd.Variable(roles.cuda())
-            labels = torch.autograd.Variable(labels.cuda())
+            img = torch.autograd.Variable(img.cuda(), volatile = True)
+            verb = torch.autograd.Variable(verb.cuda(), volatile = True)
+            roles = torch.autograd.Variable(roles.cuda(), volatile = True)
+            labels = torch.autograd.Variable(labels.cuda(), volatile = True)
         else:
-            img = torch.autograd.Variable(img)
-            verb = torch.autograd.Variable(verb)
-            roles = torch.autograd.Variable(roles)
-            labels = torch.autograd.Variable(labels)
+            img = torch.autograd.Variable(img, volatile = True)
+            verb = torch.autograd.Variable(verb, volatile = True)
+            roles = torch.autograd.Variable(roles, volatile = True)
+            labels = torch.autograd.Variable(labels, volatile = True)
         #todo: implement beam search for eval mode
         verb_predict, role_predict = model(img, verb, roles)
 

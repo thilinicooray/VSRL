@@ -129,43 +129,45 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
 def eval(model, dev_loader, encoder, gpu_mode):
     model.eval()
 
+
     print ('evaluating model...')
     top1 = imsitu_scorer(encoder, 1, 3)
     top5 = imsitu_scorer(encoder, 5, 3)
-    mx = len(dev_loader)
-    for i, (im_data, im_info, gt_boxes, num_boxes, verb, roles, labels) in enumerate(dev_loader):
-        print("{}/{} batches\r".format(i+1,mx)) ,
-        im_data = torch.squeeze(im_data,0)
-        im_info = torch.squeeze(im_info,0)
-        gt_boxes = torch.squeeze(gt_boxes,0)
-        num_boxes = torch.squeeze(num_boxes,0)
-        verb = torch.squeeze(verb,0)
-        roles = torch.squeeze(roles,0)
-        labels = torch.squeeze(labels,0)
+    with torch.no_grad():
+        mx = len(dev_loader)
+        for i, (im_data, im_info, gt_boxes, num_boxes, verb, roles, labels) in enumerate(dev_loader):
+            print("{}/{} batches\r".format(i+1,mx)) ,
+            im_data = torch.squeeze(im_data,0)
+            im_info = torch.squeeze(im_info,0)
+            gt_boxes = torch.squeeze(gt_boxes,0)
+            num_boxes = torch.squeeze(num_boxes,0)
+            verb = torch.squeeze(verb,0)
+            roles = torch.squeeze(roles,0)
+            labels = torch.squeeze(labels,0)
 
-        if gpu_mode >= 0:
-            im_data = torch.autograd.Variable(im_data.cuda())
-            im_info = torch.autograd.Variable(im_info.cuda())
-            gt_boxes = torch.autograd.Variable(gt_boxes.cuda())
-            num_boxes = torch.autograd.Variable(num_boxes.cuda())
-            roles = torch.autograd.Variable(roles.cuda())
-            verb = torch.autograd.Variable(verb.cuda())
-            labels = torch.autograd.Variable(labels.cuda())
-        else:
-            im_data = torch.autograd.Variable(im_data)
-            im_info = torch.autograd.Variable(im_info)
-            gt_boxes = torch.autograd.Variable(gt_boxes)
-            num_boxes = torch.autograd.Variable(num_boxes)
-            verb = torch.autograd.Variable(verb)
-            roles = torch.autograd.Variable(roles)
-            labels = torch.autograd.Variable(labels)
+            if gpu_mode >= 0:
+                im_data = torch.autograd.Variable(im_data.cuda())
+                im_info = torch.autograd.Variable(im_info.cuda())
+                gt_boxes = torch.autograd.Variable(gt_boxes.cuda())
+                num_boxes = torch.autograd.Variable(num_boxes.cuda())
+                roles = torch.autograd.Variable(roles.cuda())
+                verb = torch.autograd.Variable(verb.cuda())
+                labels = torch.autograd.Variable(labels.cuda())
+            else:
+                im_data = torch.autograd.Variable(im_data)
+                im_info = torch.autograd.Variable(im_info)
+                gt_boxes = torch.autograd.Variable(gt_boxes)
+                num_boxes = torch.autograd.Variable(num_boxes)
+                verb = torch.autograd.Variable(verb)
+                roles = torch.autograd.Variable(roles)
+                labels = torch.autograd.Variable(labels)
 
-        verb_predict, role_predict = model(im_data, im_info, gt_boxes, num_boxes, verb, roles)
+            verb_predict, role_predict = model(im_data, im_info, gt_boxes, num_boxes, verb, roles)
 
-        top1.add_point(torch.unsqueeze(verb_predict,0), torch.unsqueeze(verb,0),
-                       torch.unsqueeze(role_predict,0), torch.unsqueeze(labels,0))
-        top5.add_point(torch.unsqueeze(verb_predict,0), torch.unsqueeze(verb,0),
-                       torch.unsqueeze(role_predict,0), torch.unsqueeze(labels,0))
+            top1.add_point(torch.unsqueeze(verb_predict,0), torch.unsqueeze(verb,0),
+                           torch.unsqueeze(role_predict,0), torch.unsqueeze(labels,0))
+            top5.add_point(torch.unsqueeze(verb_predict,0), torch.unsqueeze(verb,0),
+                           torch.unsqueeze(role_predict,0), torch.unsqueeze(labels,0))
 
     return top1, top5
 

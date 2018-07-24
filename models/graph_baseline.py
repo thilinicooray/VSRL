@@ -42,7 +42,11 @@ class frcnn_pretrained_vgg_modified(nn.Module):
 
     def forward(self, im_data, im_info, gt_boxes, num_boxes):
         #print('frcnn original size:',self.fasterRCNN(im_data, im_info, gt_boxes, num_boxes).size())
-        return self.relu2(self.lin2(self.relu1(self.lin1(self.fasterRCNN(im_data, im_info, gt_boxes, num_boxes)))))
+        self.frcnn_out
+        with torch.no_grad():
+            self.frcnn_out = self.fasterRCNN(im_data, im_info, gt_boxes, num_boxes)
+
+        return self.relu2(self.lin2(self.relu1(self.lin1(self.frcnn_out))))
 
 
 class baseline(nn.Module):
