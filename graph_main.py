@@ -38,13 +38,13 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
             roles = torch.squeeze(roles,0)
             labels = torch.squeeze(labels,0)'''
 
-            '''print('batch details \n\timdata: ', im_data.size())
+            print('batch details \n\timdata: ', im_data.size())
             print('\tim_info: ', im_info.size())
             print('\tgt_boxes: ', gt_boxes.size())
             print('\tnum_boxes: ', num_boxes.size())
             print('\tverb: ', verb.size())
             print('\troles: ', roles.size())
-            print('\tlabels: ', labels.size())'''
+            print('\tlabels: ', labels.size())
 
             if gpu_mode >= 0:
                 im_data = torch.autograd.Variable(im_data.cuda())
