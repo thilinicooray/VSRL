@@ -120,7 +120,7 @@ class baseline(nn.Module):
         vert_states, edge_states = self.graph((vert_init,edge_init))
         print('out from graph :', vert_states.size(), edge_states.size())
 
-        verb_predict = self.verb_module(vert_states[0])
+        verb_predict = self.verb_module(vert_states[:,0])
 
         #original code use gold verbs to insert to role predict module (only at training )
 
@@ -144,7 +144,7 @@ class baseline(nn.Module):
         att_weighted_role_per_region = torch.mul(self.role_att(role_concat), vert_state_expanded[:,:,1:])
         print('att :', att_weighted_role_per_region.size())
         att_weighted_role_embd = torch.sum(att_weighted_role_per_region, 2)
-        print('out from forward :',  att_weighted_role_embd.size())
+        print('weighted sum :',  att_weighted_role_embd.size())
 
         '''for role_embd in role_embedding:
             #print('role embed size :', role_embd.size())
