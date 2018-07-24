@@ -28,7 +28,7 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
         #sizes batch_size*3*height*width, batch*504*1, batch*6*190*1, batch*3*6*lebale_count*1
         mx = len(train_loader)
         for i, (im_data, im_info, gt_boxes, num_boxes, verb, roles, labels) in enumerate(train_loader):
-            print("epoch{}-{}/{} batches\r".format(epoch,i+1,mx)) ,
+            #print("epoch{}-{}/{} batches\r".format(epoch,i+1,mx)) ,
             total_steps += 1
             '''im_data = torch.squeeze(im_data,0)
             im_info = torch.squeeze(im_info,0)
@@ -85,13 +85,13 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
             top5.add_point(verb_predict, verb, role_predict, labels)
 
 
-            if total_steps % print_freq == 0:
+            '''if total_steps % print_freq == 0:
                 top1_a = top1.get_average_results()
                 top5_a = top5.get_average_results()
                 print ("{},{},{}, {} , {}, loss = {:.2f}, avg loss = {:.2f}"
                        .format(total_steps-1,epoch,i, utils.format_dict(top1_a, "{:.2f}", "1-"),
                                utils.format_dict(top5_a,"{:.2f}","5-"), loss.data[0],
-                               train_loss / ((total_steps-1)%eval_frequency) ))
+                               train_loss / ((total_steps-1)%eval_frequency) ))'''
 
 
             if total_steps % eval_frequency == 0:
@@ -134,7 +134,7 @@ def eval(model, dev_loader, encoder, gpu_mode):
     with torch.no_grad():
         mx = len(dev_loader)
         for i, (im_data, im_info, gt_boxes, num_boxes, verb, roles, labels) in enumerate(dev_loader):
-            print("{}/{} batches\r".format(i+1,mx)) ,
+            #print("{}/{} batches\r".format(i+1,mx)) ,
             '''im_data = torch.squeeze(im_data,0)
             im_info = torch.squeeze(im_info,0)
             gt_boxes = torch.squeeze(gt_boxes,0)
@@ -195,13 +195,18 @@ def main():
     if args.gpuid >= 0:
         #print('GPU enabled')
         model.cuda()
+    lr_set = [0.01, 0.001, 0.0001, 0.00001]
+    decay_set = [0.1, 0.01,0.001, 0.0001, 0.00001]
 
-    #lr, weight decay user param
-    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad,model.parameters()), lr=0.01)
-    #gradient clipping, grad check
+    for lr in lr_set:
+        for decay in decay_set:
+            #lr, weight decay user param
+            print('CURRENT PARAM SET : lr, decay :' , lr, decay)
+            optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad,model.parameters()), lr=lr, weight_decay=decay)
+            #gradient clipping, grad check
 
-    print('Model training started!')
-    train(model, train_loader, dev_loader, optimizer,200, 'trained_models', encoder, args.gpuid)
+            print('Model training started!')
+            train(model, train_loader, dev_loader, optimizer,2, 'trained_models', encoder, args.gpuid)
 
 
 
