@@ -111,7 +111,9 @@ class baseline(nn.Module):
         vert_init = torch.cat((torch.unsqueeze(verb_init, 1),img_embedding_batch),1)
         print('vert_init :', vert_init.size())
         #initialize each edge with verb + respective region feature vector
-        edge_init = img_embedding_batch + verb_init
+        verb_init_expand = verb_init.expand(img_embedding_batch.size(1), verb_init.size(0), verb_init.size(1))
+        verb_init_expand = verb_init_expand.transpose(0,1)
+        edge_init = img_embedding_batch + verb_init_expand
 
         print('input to graph :', vert_init.size(), edge_init.size())
 
