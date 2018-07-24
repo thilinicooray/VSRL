@@ -37,22 +37,22 @@ class action_graph(nn.Module):
         self.vert_att.apply(utils.init_weight)
 
 
-    def forward(self, input):
+    def forward(self, input_):
 
         #init hidden state with zeros
-        vert_state = torch.zeros(input[0].size(1), self.vert_state_dim)
-        edge_state = torch.zeros(input[1].size(1), self.edge_state_dim)
+        vert_state = torch.zeros(input_[0].size(1), self.vert_state_dim)
+        edge_state = torch.zeros(input_[1].size(1), self.edge_state_dim)
 
         if self.gpu_mode >= 0:
             vert_state = vert_state.to(torch.device('cuda'))
             edge_state = edge_state.to(torch.device('cuda'))
 
-        batch_size = input[0].size(0)
+        batch_size = input_[0].size(0)
         vert_state_list = []
         edge_state_list = []
         #todo: can this be parallelized?
         for i in range(batch_size):
-            input = input[i]
+            input = input_[i]
             vert_state.fill_(0)
             vert_state.fill_(0)
             vert_state = self.vert_gru(input[0], vert_state)
