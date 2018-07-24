@@ -40,15 +40,15 @@ class action_graph(nn.Module):
     def forward(self, input):
 
         #init hidden state with zeros
-        vert_state = torch.zeros(input[0].size(1), self.vert_state_dim)
-        edge_state = torch.zeros(input[1].size(1), self.edge_state_dim)
+        vert_state = torch.zeros(input[0].size(0), input[0].size(1), self.vert_state_dim)
+        edge_state = torch.zeros(input[1].size(0),input[1].size(1), self.edge_state_dim)
 
         if self.gpu_mode >= 0:
             vert_state = vert_state.to(torch.device('cuda'))
             edge_state = edge_state.to(torch.device('cuda'))
 
-        vert_state = self.vert_gru(input[0,:], vert_state)
-        edge_state = self.edge_gru(input[1,:], edge_state)
+        vert_state = self.vert_gru(input[0], vert_state)
+        edge_state = self.edge_gru(input[1], edge_state)
 
         #todo: check whether this way is correct, TF code uses a separate global var to keep hidden state
         for i in range(self.num_steps):
