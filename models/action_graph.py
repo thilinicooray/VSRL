@@ -52,11 +52,10 @@ class action_graph(nn.Module):
         edge_state_list = []
         #todo: can this be parallelized?
         for i in range(batch_size):
-            input = input_[i]
             vert_state.fill_(0)
             vert_state.fill_(0)
-            vert_state = self.vert_gru(input[0], vert_state)
-            edge_state = self.edge_gru(input[1], edge_state)
+            vert_state = self.vert_gru(input_[0][i], vert_state)
+            edge_state = self.edge_gru(input_[1][i], edge_state)
 
             #todo: check whether this way is correct, TF code uses a separate global var to keep hidden state
             for i in range(self.num_steps):
