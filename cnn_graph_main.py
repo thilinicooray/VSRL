@@ -11,7 +11,7 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
     model.train()
     train_loss = 0
     total_steps = 0
-    print_freq = 50
+    print_freq = 500
     dev_score_list = []
 
     top1 = imsitu_scorer(encoder, 1, 3)
