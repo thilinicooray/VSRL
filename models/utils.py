@@ -13,6 +13,9 @@ import numpy as np
             init.kaiming_normal_(module.bias)'''
 
 def init_weight(linear, val = None):
+    if isinstance(linear, nn.Conv2d):
+        n = linear.kernel_size[0] * linear.kernel_size[1] * linear.out_channels
+        linear.weight.data.normal_(0, math.sqrt(2. / n))
     if isinstance(linear, nn.Linear):
         if val is None:
             fan = linear.in_features +  linear.out_features

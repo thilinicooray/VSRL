@@ -1,6 +1,6 @@
 import torch
 from imsitu_encoder import imsitu_encoder
-from imsitu_loader import imsitu_loader
+from imsitu_loader_graph import imsitu_loader
 from imsitu_scorer import imsitu_scorer
 import json
 from models import graph_baseline
@@ -63,12 +63,13 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
                 roles = torch.autograd.Variable(roles)
                 labels = torch.autograd.Variable(labels)
 
+            optimizer.zero_grad()
+
             verb_predict, role_predict = model(im_data, im_info, gt_boxes, num_boxes, verb, roles)
 
             loss = model.calculate_loss(verb_predict, verb, role_predict, labels)
             #print('current loss = ', loss)
 
-            optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
