@@ -59,7 +59,7 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
                 print('grad is')
                 print(f.grad)'''
 
-            train_loss += loss.data
+            train_loss += loss.data[0]
 
             top1.add_point(verb_predict, verb, role_predict, labels)
             top5.add_point(verb_predict, verb, role_predict, labels)
