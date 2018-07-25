@@ -11,7 +11,7 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
     model.train()
     train_loss = 0
     total_steps = 0
-    print_freq = 500
+    print_freq = 50
     dev_score_list = []
 
     top1 = imsitu_scorer(encoder, 1, 3)
@@ -102,6 +102,8 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
                 top1 = imsitu_scorer(encoder, 1, 3)
                 top5 = imsitu_scorer(encoder, 5, 3)
 
+            del verb_predict, role_predict, loss
+
         print('Epoch ', epoch, ' completed!')
 
 def eval(model, dev_loader, encoder, gpu_mode):
@@ -138,6 +140,8 @@ def eval(model, dev_loader, encoder, gpu_mode):
 
             top1.add_point(verb_predict, verb, role_predict, labels)
             top5.add_point(verb_predict, verb, role_predict, labels)
+
+            del verb_predict, role_predict
 
     return top1, top5
 
