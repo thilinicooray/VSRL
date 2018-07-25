@@ -11,7 +11,7 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
     model.train()
     train_loss = 0
     total_steps = 0
-    print_freq = 10
+    print_freq = 50
     dev_score_list = []
 
     top1 = imsitu_scorer(encoder, 1, 3)
@@ -168,8 +168,8 @@ def main():
     if args.gpuid >= 0:
         #print('GPU enabled')
         model.cuda()
-    lr_set = [0.01]
-    decay_set = [0.0001]
+    lr_set = [0.0001]
+    decay_set = [0]
 
     for lr in lr_set:
         for decay in decay_set:
