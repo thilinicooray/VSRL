@@ -206,6 +206,8 @@ class baseline(nn.Module):
             sub_loss = 0
             for index in range(gt_labels.size()[1]):
                 actual_ids = utils.get_only_relevant_roles(gt_labels[i,index,:,:])
+                if self.gpu_mode >= 0:
+                    actual_ids = actual_ids.to(torch.device('cuda'))
                 sub_loss += criterion(role_label_pred[i, :len(actual_ids)], actual_ids)
             loss += sub_loss
 
