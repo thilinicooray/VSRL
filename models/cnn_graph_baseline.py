@@ -211,7 +211,6 @@ class baseline(nn.Module):
 
 
         final_loss = verb_loss + loss/batch_size
-        print('loss', final_loss)
         return final_loss
 
 
