@@ -140,23 +140,30 @@ class baseline(nn.Module):
         #original code use gold verbs to insert to role predict module (only at training )
         #print('roles', roles)
         role_embedding = self.role_lookup_table(roles)
-        #print('role_embedding :', role_embedding)
+        masked_embedding, mask = self.encoder.apply_mask(roles,role_embedding)
+        #todo:mask out irrelevant roles from each sample
+        #print('role_embedding :', masked_embedding)
 
         role_label_embd_list = []
 
         #for attention, first try with node only
         #todo: use edge for this calculation
-        role_expanded_state = role_embedding.expand(edge_states.size(1),role_embedding.size(0), role_embedding.size(1),
+        role_expanded_state = masked_embedding.expand(edge_states.size(1),role_embedding.size(0), role_embedding.size(1),
                                                     role_embedding.size(2))
+        mask_expanded = mask.expand(edge_states.size(1),role_embedding.size(0), role_embedding.size(1),
+                                                role_embedding.size(2))
         role_expanded_state = role_expanded_state.permute(1,2,0,3)
+        mask_expanded = mask_expanded.permute(1,2,0,3)
         vert_state_expanded = vert_states.expand(role_embedding.size(1),vert_states.size(0), vert_states.size(1),
                                                  vert_states.size(2))
         vert_state_expanded = vert_state_expanded.transpose(0,1)
+
+        masked_vert_state_expanded = mask_expanded * vert_state_expanded[:,:,1:]
         #print('expand :', role_expanded_state.size(), vert_state_expanded.size())
-        role_concat = torch.cat((role_expanded_state, vert_state_expanded[:,:,1:]), 3)
+        role_concat = torch.cat((role_expanded_state, masked_vert_state_expanded), 3)
         #print('cat :', role_concat.size())
 
-        att_weighted_role_per_region = torch.mul(self.role_att(role_concat), vert_state_expanded[:,:,1:])
+        att_weighted_role_per_region = torch.mul(self.role_att(role_concat), masked_vert_state_expanded)
         #print('att :', att_weighted_role_per_region.size())
         att_weighted_role_embd = torch.sum(att_weighted_role_per_region, 2)
         #print('att weighted', att_weighted_role_embd)
@@ -206,11 +213,11 @@ class baseline(nn.Module):
         for i in range(batch_size):
             sub_loss = 0
             for index in range(gt_labels.size()[1]):
-                '''print('roles :', torch.max(gt_labels[i,index,:,:],1)[1])
+                #print('roles :', torch.max(gt_labels[i,index,:,:],1)[1])
                 actual_ids = utils.get_only_relevant_roles(gt_labels[i,index,:,:])
                 if self.gpu_mode >= 0:
-                    actual_ids = actual_ids.to(torch.device('cuda'))'''
-                sub_loss += criterion(role_label_pred[i], torch.max(gt_labels[i,index,:,:],1)[1])
+                    actual_ids = actual_ids.to(torch.device('cuda'))
+                sub_loss += criterion(role_label_pred[i][:len(actual_ids)], actual_ids)
             loss += sub_loss
 
 

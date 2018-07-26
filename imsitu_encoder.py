@@ -85,9 +85,9 @@ class imsitu_encoder():
 
     def encode(self, item):
         verb = self.verb_embedding[self.verb_list.index(item['verb'])]
-        roles_full = self.verb2role_embedding[self.verb_list.index(item['verb'])]
-        actual_count = len(self.verb2_role_dict[item['verb']])
-        roles = roles_full[:actual_count]
+        roles = self.verb2role_embedding[self.verb_list.index(item['verb'])]
+        '''actual_count = len(self.verb2_role_dict[item['verb']])
+        roles = roles_full[:actual_count]'''
         all_frame_embedding_list = []
 
         for frame in item['frames']:
@@ -101,10 +101,10 @@ class imsitu_encoder():
 
                 label_embedding_list.append(label_embedding)
 
-            '''role_padding_count = self.max_role_count - len(label_embedding_list)
+            role_padding_count = self.max_role_count - len(label_embedding_list)
 
             for i in range(role_padding_count):
-                label_embedding_list.append(torch.zeros(len(self.label_list)))'''
+                label_embedding_list.append(torch.zeros(len(self.label_list)))
 
             all_frame_embedding_list.append(torch.stack(label_embedding_list))
 
@@ -167,3 +167,18 @@ class imsitu_encoder():
             adj_matrix_list.append(adj)
 
         return torch.stack(adj_matrix_list)
+
+    def apply_mask(self, roles, embedding):
+        mask = embedding
+        batch_size = roles.size(0)
+        for i in range(batch_size):
+            for j in range(self.get_max_role_count()):
+                role = roles[i][j]
+                val = role[role > 0]
+                if not len(val) > 0:
+                    embedding[i][j] = embedding[i][j].fill_(0)
+                    mask[i][j] = mask[i][j].fill_(0)
+                else:
+                    mask[i][j] = mask[i][j].fill_(1)
+
+        return embedding,mask
