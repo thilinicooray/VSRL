@@ -85,7 +85,9 @@ class imsitu_encoder():
 
     def encode(self, item):
         verb = self.verb_embedding[self.verb_list.index(item['verb'])]
-        roles = self.verb2role_embedding[self.verb_list.index(item['verb'])]
+        roles_full = self.verb2role_embedding[self.verb_list.index(item['verb'])]
+        actual_count = len(self.verb2_role_dict[item['verb']])
+        roles = roles_full[:actual_count]
         all_frame_embedding_list = []
 
         for frame in item['frames']:
@@ -99,10 +101,10 @@ class imsitu_encoder():
 
                 label_embedding_list.append(label_embedding)
 
-            role_padding_count = self.max_role_count - len(label_embedding_list)
+            '''role_padding_count = self.max_role_count - len(label_embedding_list)
 
             for i in range(role_padding_count):
-                label_embedding_list.append(torch.zeros(len(self.label_list)))
+                label_embedding_list.append(torch.zeros(len(self.label_list)))'''
 
             all_frame_embedding_list.append(torch.stack(label_embedding_list))
 

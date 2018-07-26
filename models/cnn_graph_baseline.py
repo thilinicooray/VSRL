@@ -138,9 +138,9 @@ class baseline(nn.Module):
         verb_predict = self.verb_module(vert_states[:,0])
 
         #original code use gold verbs to insert to role predict module (only at training )
-
+        #print('roles', roles)
         role_embedding = self.role_lookup_table(roles)
-        #print('role_embedding :', role_embedding.size())
+        #print('role_embedding :', role_embedding)
 
         role_label_embd_list = []
 
@@ -159,6 +159,7 @@ class baseline(nn.Module):
         att_weighted_role_per_region = torch.mul(self.role_att(role_concat), vert_state_expanded[:,:,1:])
         #print('att :', att_weighted_role_per_region.size())
         att_weighted_role_embd = torch.sum(att_weighted_role_per_region, 2)
+        #print('att weighted', att_weighted_role_embd)
         #print('weighted sum :',  att_weighted_role_embd.size())
 
         '''for role_embd in role_embedding:
@@ -205,14 +206,16 @@ class baseline(nn.Module):
         for i in range(batch_size):
             sub_loss = 0
             for index in range(gt_labels.size()[1]):
+                '''print('roles :', torch.max(gt_labels[i,index,:,:],1)[1])
                 actual_ids = utils.get_only_relevant_roles(gt_labels[i,index,:,:])
                 if self.gpu_mode >= 0:
-                    actual_ids = actual_ids.to(torch.device('cuda'))
-                sub_loss += criterion(role_label_pred[i, :len(actual_ids)], actual_ids)
+                    actual_ids = actual_ids.to(torch.device('cuda'))'''
+                sub_loss += criterion(role_label_pred[i], torch.max(gt_labels[i,index,:,:],1)[1])
             loss += sub_loss
 
 
         final_loss = verb_loss + loss/batch_size
+        print('loss :', final_loss)
         return final_loss
 
 
