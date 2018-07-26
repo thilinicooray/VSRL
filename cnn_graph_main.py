@@ -75,7 +75,7 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
 
 
             if total_steps % eval_frequency == 0:
-                top1, top5 = eval(model, dev_loader, encoder, gpu_mode)
+                top1, top5, val_loss = eval(model, dev_loader, encoder, gpu_mode)
                 model.train()
 
                 top1_avg = top1.get_average_results()
@@ -88,6 +88,7 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
                 print ('Dev {} average :{:.2f} {} {}'.format(total_steps-1, avg_score*100,
                                                              utils.format_dict(top1_avg,'{:.2f}', '1-'),
                                                              utils.format_dict(top5_avg, '{:.2f}', '5-')))
+                print('Dev loss :', val_loss)
 
                 dev_score_list.append(avg_score)
                 max_score = max(dev_score_list)
@@ -108,7 +109,7 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
 
 def eval(model, dev_loader, encoder, gpu_mode):
     model.eval()
-
+    val_loss = 0
 
     print ('evaluating model...')
     top1 = imsitu_scorer(encoder, 1, 3)
@@ -137,13 +138,14 @@ def eval(model, dev_loader, encoder, gpu_mode):
                 labels = torch.autograd.Variable(labels)
 
             verb_predict, role_predict = model(img, verb, roles)
-
+            loss = model.calculate_loss(verb_predict, verb, role_predict, labels)
+            val_loss += loss.data[0]
             top1.add_point(verb_predict, verb, role_predict, labels)
             top5.add_point(verb_predict, verb, role_predict, labels)
 
-            del verb_predict, role_predict, img, verb, roles, labels
+            del verb_predict, role_predict, img, verb, roles, labels, loss
 
-    return top1, top5
+    return top1, top5, val_loss/mx
 
 def main():
 
@@ -172,7 +174,7 @@ def main():
     if args.gpuid >= 0:
         #print('GPU enabled')
         model.cuda()
-    lr_set = [0.01]
+    lr_set = [0.0001]
     decay_set = [0]
 
     for lr in lr_set:

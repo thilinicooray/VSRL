@@ -73,3 +73,14 @@ def format_dict(d, s, p):
         if len(rv) > 0: rv += " , "
         rv+=p+str(k) + ":" + s.format(v*100)
     return rv
+
+def get_only_relevant_roles(gt_labels):
+
+    actual_ids = []
+
+    for role in gt_labels:
+        val = role[role > 0]
+        if len(val) > 0:
+            _, id = torch.max(torch.unsqueeze(role,1), 0)
+            actual_ids.append(id.item())
+    return torch.tensor(actual_ids)

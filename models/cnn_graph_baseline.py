@@ -197,6 +197,7 @@ class baseline(nn.Module):
 
 
         target = torch.max(gt_verbs,1)[1]
+        #print(target)
         verb_loss = criterion(verb_pred, target)
         #this is a multi label classification problem
         batch_size = verb_pred.size()[0]
@@ -204,11 +205,13 @@ class baseline(nn.Module):
         for i in range(batch_size):
             sub_loss = 0
             for index in range(gt_labels.size()[1]):
-                sub_loss += criterion(role_label_pred[i], torch.max(gt_labels[i,index,:,:],1)[1])
+                actual_ids = utils.get_only_relevant_roles(gt_labels[i,index,:,:])
+                sub_loss += criterion(role_label_pred[i, :len(actual_ids)], actual_ids)
             loss += sub_loss
 
 
         final_loss = verb_loss + loss/batch_size
+        print('loss', final_loss)
         return final_loss
 
 
