@@ -194,6 +194,6 @@ class imsitu_encoder():
 
             all_frame_id_list.append(label_id_list)
 
-        labels = torch.stack(all_frame_id_list)
+        labels = torch.stack(all_frame_id_list,0)
 
         return labels
