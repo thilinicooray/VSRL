@@ -19,6 +19,9 @@ class action_graph(nn.Module):
         self.vert_gru = nn.GRUCell(self.vert_state_dim, self.vert_state_dim)
         self.edge_gru = nn.GRUCell(self.edge_state_dim, self.edge_state_dim)
 
+        utils.init_gru_cell(self.vert_gru)
+        utils.init_gru_cell(self.edge_gru)
+
         #todo: check gru param init. code resets, but not sure
 
         self.edge_att = nn.Sequential(

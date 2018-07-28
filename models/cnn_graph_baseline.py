@@ -4,6 +4,7 @@ import torchvision as tv
 import torch.nn.functional as F
 from . import utils
 import math
+import torch.nn.init as init
 
 from .action_graph import action_graph
 from .faster_rcnn.utils.config import cfg
@@ -24,7 +25,7 @@ class resnet_modified_small(nn.Module):
         self.dropout2d = nn.Dropout2d(.5)
         self.dropout = nn.Dropout(.5)
         self.relu = nn.LeakyReLU()
-        utils.init_weight(self.linear)
+        init.xavier_normal(self.linear.weight)
 
         #self.conv1 = nn.Conv2d(512, 256, 3, stride=1, padding=1)
         #self.conv2 = nn.Conv2d(265, 256, 3, stride=2, padding=1)
@@ -38,7 +39,7 @@ class resnet_modified_small(nn.Module):
         self.dropout2d1 = nn.Dropout2d(.5)
         self.dropout1 = nn.Dropout(.5)
         self.relu1 = nn.LeakyReLU()
-        utils.init_weight(self.linear1)
+        init.xavier_normal(self.linear1.weight)
 
     def base_size(self): return 512
     def segment_count(self): return 128

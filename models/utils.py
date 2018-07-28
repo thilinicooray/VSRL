@@ -12,23 +12,34 @@ import numpy as np
         if module.bias is not None:
             init.kaiming_normal_(module.bias)'''
 
-def init_weight(linear, val = None, pad_idx=None):
+def init_weight(linear, pad_idx=None):
     if isinstance(linear, nn.Conv2d):
-        n = linear.kernel_size[0] * linear.kernel_size[1] * linear.out_channels
-        linear.weight.data.normal_(0, math.sqrt(2. / n))
+        init.xavier_normal(linear.weight)
+        '''n = linear.kernel_size[0] * linear.kernel_size[1] * linear.out_channels
+        linear.weight.data.normal_(0, math.sqrt(2. / n))'''
     if isinstance(linear, nn.Linear):
-        if val is None:
-            fan = linear.in_features +  linear.out_features
-            spread = math.sqrt(2.0) * math.sqrt( 2.0 / fan )
-        else:
-            spread = val
-        linear.weight.data.uniform_(-spread,spread)
-        if linear.bias is not None:
-            linear.bias.data.uniform_(-spread,spread)
+        init.xavier_normal(linear.weight)
     if isinstance(linear, nn.Embedding):
-        bias = np.sqrt(3.0 / linear.weight.size(1))
-        nn.init.uniform(linear.weight, -bias, bias)
+        init.xavier_normal(linear.weight)
         linear.weight.data[pad_idx] = 0
+
+def init_gru_cell(input):
+
+    weight = eval('input_lstm.weight_ih')
+    bias = np.sqrt(6.0 / (weight.size(0) / 4 + weight.size(1)))
+    nn.init.uniform(weight, -bias, bias)
+    weight = eval('input_lstm.weight_hh')
+    bias = np.sqrt(6.0 / (weight.size(0) / 4 + weight.size(1)))
+    nn.init.uniform(weight, -bias, bias)
+
+    if input.bias:
+        weight = eval('input_lstm.bias_ih' )
+        weight.data.zero_()
+        weight.data[input.hidden_size: 2 * input.hidden_size] = 1
+        weight = eval('input_lstm.bias_hh')
+        weight.data.zero_()
+        weight.data[input.hidden_size: 2 * input.hidden_size] = 1
+
 
 def build_mlp(dim_list, activation='relu', batch_norm='none',
               dropout=0, final_non_linearity=True):
