@@ -192,7 +192,7 @@ class imsitu_encoder():
             for i in range(role_padding_count):
                 label_id_list.append(75000)
 
-            all_frame_id_list.append(label_id_list)
+            all_frame_id_list.append(torch.tensor(label_id_list))
 
         labels = torch.stack(all_frame_id_list,0)
 
