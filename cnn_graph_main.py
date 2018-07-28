@@ -163,15 +163,17 @@ def main():
     train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)
 
-    train_set = imsitu_loader(imgset_folder, train_set, encoder)
+    model = cnn_graph_baseline.baseline(encoder, args.gpuid)
+
+    train_set = imsitu_loader(imgset_folder, train_set, encoder, model.train_preprocess())
 
     train_loader = torch.utils.data.DataLoader(train_set, batch_size=64, shuffle=True, num_workers=4)
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
-    dev_set = imsitu_loader(imgset_folder, dev_set, encoder)
+    dev_set = imsitu_loader(imgset_folder, dev_set, encoder, model.train_preprocess())
     dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=64, shuffle=True, num_workers=4)
 
-    model = cnn_graph_baseline.baseline(encoder, args.gpuid)
+
 
     if args.gpuid >= 0:
         #print('GPU enabled')

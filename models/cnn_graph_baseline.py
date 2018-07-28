@@ -66,8 +66,27 @@ class resnet_modified_small(nn.Module):
         return torch.cat((torch.unsqueeze(x_full,1), x_full_segment), 1)
 
 class baseline(nn.Module):
+
     def __init__(self, encoder, gpu_mode,cnn_type='resnet_34'):
         super(baseline, self).__init__()
+
+        self.normalize = tv.transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+
+        self.train_transform = tv.transforms.Compose([
+            tv.transforms.Scale(224),
+            tv.transforms.RandomCrop(224),
+            tv.transforms.RandomHorizontalFlip(),
+            tv.transforms.ToTensor(),
+            self.normalize,
+        ])
+
+        self.dev_transform = tv.transforms.Compose([
+            tv.transforms.Scale(224),
+            tv.transforms.CenterCrop(224),
+            tv.transforms.ToTensor(),
+            self.normalize,
+        ])
+
         self.encoder = encoder
         self.gpu_mode = gpu_mode
 
@@ -114,6 +133,9 @@ class baseline(nn.Module):
         )
 
         self.role_module.apply(utils.init_weight)
+
+    def train_preprocess(self): return self.train_transform
+    def dev_preprocess(self): return self.dev_transform
 
     def forward(self, img, verbs, roles):
         #print('input size', im_data.size())

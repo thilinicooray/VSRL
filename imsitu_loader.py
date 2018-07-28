@@ -4,23 +4,12 @@ from PIL import Image
 import os
 
 class imsitu_loader(data.Dataset):
-    def __init__(self, img_dir, annotation_file, encoder):
+    def __init__(self, img_dir, annotation_file, encoder, transform=None):
         self.img_dir = img_dir
         self.annotations = annotation_file
         self.ids = list(self.annotations.keys())
         self.encoder = encoder
-        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-        '''
-        baseline crf uses below 3 also for training transform and only first 2 for dev transform
-        tv.transforms.Scale(224),
-        tv.transforms.RandomCrop(224),
-        tv.transforms.RandomHorizontalFlip(),
-        '''
-        self.transform = transforms.Compose([
-            transforms.Resize(224),
-            transforms.ToTensor(),
-            normalize
-        ])
+        self.transform = transform
 
     def __getitem__(self, index):
         _id = self.ids[index]
