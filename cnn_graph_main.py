@@ -1,7 +1,7 @@
 import torch
 from imsitu_encoder import imsitu_encoder
 from imsitu_loader import imsitu_loader
-from imsitu_scorer_new import imsitu_scorer
+from imsitu_scorer import imsitu_scorer
 import json
 from models import cnn_graph_baseline
 import os
