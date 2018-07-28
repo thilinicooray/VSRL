@@ -22,19 +22,19 @@ class action_graph(nn.Module):
         #todo: check gru param init. code resets, but not sure
 
         self.edge_att = nn.Sequential(
-            nn.Linear(self.edge_state_dim * 2, 1),
+            #nn.Linear(self.edge_state_dim * 2, 1),
             nn.Sigmoid(),
             nn.LogSoftmax()
         )
 
         self.vert_att = nn.Sequential(
-            nn.Linear(self.vert_state_dim * 2, 1),
+            #nn.Linear(self.vert_state_dim * 2, 1),
             nn.Sigmoid(),
             nn.LogSoftmax()
         )
 
-        self.edge_att.apply(utils.init_weight)#actually pytorch init does reset param
-        self.vert_att.apply(utils.init_weight)
+        '''self.edge_att.apply(utils.init_weight)#actually pytorch init does reset param
+        self.vert_att.apply(utils.init_weight)'''
 
 
     def forward(self, input_):
@@ -90,11 +90,11 @@ class action_graph(nn.Module):
 
         #print('vert shapes', verb_vert_state.size(), region_vert_state.size(), verb_expanded_state.size())
 
-        verb_concat = torch.cat((verb_expanded_state, edge_state), 1)
-        region_concat = torch.cat((region_vert_state, edge_state), 1)
+        verb_mul = torch.mul(verb_expanded_state, edge_state)
+        region_mul = torch.mul(region_vert_state, edge_state)
 
-        att_weighted_verb = torch.mul(self.edge_att(verb_concat), verb_expanded_state)
-        att_weighted_region = torch.mul(self.edge_att(region_concat), region_vert_state)
+        att_weighted_verb = torch.mul(self.edge_att(verb_mul), verb_expanded_state)
+        att_weighted_region = torch.mul(self.edge_att(region_mul), region_vert_state)
 
         return att_weighted_verb + att_weighted_region
 
@@ -105,8 +105,8 @@ class action_graph(nn.Module):
 
         #print('vert shapes', verb_vert_state.size(), region_vert_state.size(), verb_expanded_state.size())
 
-        verb_concat = torch.cat((verb_expanded_state, edge_state), 1)
-        region_concat = torch.cat((region_vert_state, edge_state), 1)
+        verb_concat = torch.mul(verb_expanded_state, edge_state)
+        region_concat = torch.mul(region_vert_state, edge_state)
 
         att_weighted_verb_per_edge = torch.mul(self.vert_att(verb_concat), edge_state)
         att_weighted_region = torch.mul(self.edge_att(region_concat), edge_state)

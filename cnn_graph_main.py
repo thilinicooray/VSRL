@@ -1,7 +1,7 @@
 import torch
 from imsitu_encoder import imsitu_encoder
 from imsitu_loader import imsitu_loader
-from imsitu_scorer import imsitu_scorer
+from imsitu_scorer_new import imsitu_scorer
 import json
 from models import cnn_graph_baseline
 import os
@@ -104,8 +104,10 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
                 top5 = imsitu_scorer(encoder, 5, 3)
 
             del verb_predict, role_predict, loss, img, verb, roles, labels
+            #break
 
         print('Epoch ', epoch, ' completed!')
+        break
 
 def eval(model, dev_loader, encoder, gpu_mode):
     model.eval()

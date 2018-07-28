@@ -99,18 +99,21 @@ class baseline(nn.Module):
 
         self.verb_module.apply(utils.init_weight)
 
-        self.role_lookup_table = nn.Linear(self.num_roles, self.embedding_size)
+        self.role_lookup_table = nn.Embedding(self.num_roles + 1, self.embedding_size, padding_idx=self.num_roles)
+        utils.init_weight(self.role_lookup_table, pad_idx=self.num_roles)
 
-        self.role_att = nn.Sequential(
-            nn.Linear(self.embedding_size * 2, 1),
-            nn.Tanh(),
+        '''self.role_att = nn.Sequential(
             nn.LogSoftmax()
-        )
+        )'''
+
+        #self.role_att.apply(utils.init_weight)
 
         self.role_module = nn.Sequential(
             nn.ReLU(),
             nn.Linear(self.embedding_size, self.vocab_size)
         )
+
+        self.role_module.apply(utils.init_weight)
 
     def forward(self, img, verbs, roles):
         #print('input size', im_data.size())
@@ -139,48 +142,28 @@ class baseline(nn.Module):
 
         #original code use gold verbs to insert to role predict module (only at training )
         #print('roles', roles)
-        role_embedding = self.role_lookup_table(roles)
-        masked_embedding, mask = self.encoder.apply_mask(roles,role_embedding)
-        #todo:mask out irrelevant roles from each sample
-        #print('role_embedding :', masked_embedding)
+        '''for i in range(roles.size(0)):
+            for j in range(0,6):
+                embd = self.role_lookup_table(roles[i][j].type(torch.LongTensor))
+                print('role embd' , embd)
+                break
+            break'''
+        role_embedding = self.role_lookup_table(roles.type(torch.LongTensor))
+        #print('role embedding', role_embedding[0][3])
 
-        role_label_embd_list = []
+        vert_no_verb = vert_states[:,1:]
 
-        #for attention, first try with node only
-        #todo: use edge for this calculation
-        role_expanded_state = masked_embedding.expand(edge_states.size(1),role_embedding.size(0), role_embedding.size(1),
-                                                    role_embedding.size(2))
-        mask_expanded = mask.expand(edge_states.size(1),role_embedding.size(0), role_embedding.size(1),
-                                                role_embedding.size(2))
-        role_expanded_state = role_expanded_state.permute(1,2,0,3)
-        mask_expanded = mask_expanded.permute(1,2,0,3)
-        vert_state_expanded = vert_states.expand(role_embedding.size(1),vert_states.size(0), vert_states.size(1),
-                                                 vert_states.size(2))
-        vert_state_expanded = vert_state_expanded.transpose(0,1)
+        role_mul = torch.matmul(role_embedding, vert_no_verb.transpose(-2, -1))#torch.mul(role_embedding, vert_state_expanded)
+        #print('cat :', role_mul[0,-1])
+        role_mul = role_mul.masked_fill(role_mul == 0, -1e9)
+        #print('after mask :', role_mul[0,-1])
 
-        masked_vert_state_expanded = mask_expanded * vert_state_expanded[:,:,1:]
-        #print('expand :', role_expanded_state.size(), vert_state_expanded.size())
-        role_concat = torch.cat((role_expanded_state, masked_vert_state_expanded), 3)
-        #print('cat :', role_concat.size())
+        p_attn = F.softmax(role_mul, dim = -1)
 
-        att_weighted_role_per_region = torch.mul(self.role_att(role_concat), masked_vert_state_expanded)
-        #print('att :', att_weighted_role_per_region.size())
-        att_weighted_role_embd = torch.sum(att_weighted_role_per_region, 2)
-        #print('att weighted', att_weighted_role_embd)
-        #print('weighted sum :',  att_weighted_role_embd.size())
+        #todo: for padded parts, att = 1/128 is calculated
+        att_weighted_role = torch.matmul(p_attn, vert_no_verb)
 
-        '''for role_embd in role_embedding:
-            #print('role embed size :', role_embd.size())
-            role_expanded_state = role_embd.expand(edge_states.size(0), role_embd.size(0))
-            #print('expand :', role_expanded_state.size(), vert_states[1:].size())
-            role_concat = torch.cat((role_expanded_state, vert_states[1:]), 1)
-            #print('concat :', role_concat.size())
-            att_weighted_role_per_region = torch.mul(self.role_att(role_concat), vert_states[1:])
-            att_weighted_role = torch.sum(att_weighted_role_per_region, 0)
-            role_label_embd_list.append(att_weighted_role)
-
-        label_embed = torch.stack(role_label_embd_list)'''
-        role_label_predict = self.role_module(att_weighted_role_embd)
+        role_label_predict = self.role_module(att_weighted_role)
 
         #print('out from forward :', verb_predict.size(), role_label_predict.size())
 
@@ -202,10 +185,9 @@ class baseline(nn.Module):
         final_loss = verb_loss + loss'''
 
         criterion = nn.CrossEntropyLoss()
-
-
+        pred_best = torch.max(F.softmax(verb_pred, dim = -1),1)[1]
         target = torch.max(gt_verbs,1)[1]
-        #print(target)
+        #print('verb pred vs gt', pred_best, target)
         verb_loss = criterion(verb_pred, target)
         #this is a multi label classification problem
         batch_size = verb_pred.size()[0]

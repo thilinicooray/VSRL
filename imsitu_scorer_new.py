@@ -3,17 +3,16 @@
 import torch
 
 class imsitu_scorer():
-    def __init__(self, encoder,topk, nref, image_group = {}):
-        self.score_cards = {}
+    def __init__(self, encoder,topk, nref):
+        self.score_cards = []
         self.topk = topk
         self.nref = nref
-        self.image_group = image_group
         self.encoder = encoder
 
     def clear(self):
         self.score_cards = {}
 
-    def add_point(self, verb_predict, gt_verbs, labels_predict, gt_labels, image_names = None):
+    def add_point(self, verb_predict, gt_verbs, labels_predict, gt_labels):
         #encoded predictions should be batch x verbs x values #assumes the are the same order as the references
         #encoded reference should be batch x 1+ references*roles,values (sorted)
 
@@ -28,20 +27,14 @@ class imsitu_scorer():
 
 
             gt_v = torch.max(gt_verb, 0)[1]
-            print('sorted idx:',self.topk, sorted_idx[:self.topk], gt_v)
+            #print('sorted idx:',self.topk, sorted_idx[:self.topk], gt_v)
             #print('groud truth verb id:', gt_v)
 
-            if image_names is not None: _image = image_names[i]
 
-            if image_names is not None and _image in self.image_group: sc_key = (gt_v, self.image_group[_image])
-            else: sc_key = (gt_v, "")
+            new_card = {"verb":0.0, "value":0.0, "value*":0.0, "n_value":0.0, "value-all":0.0, "value-all*":0.0}
 
-            if sc_key not in self.score_cards:
-                new_card = {"verb":0.0, "n_image":0.0, "value":0.0, "value*":0.0, "n_value":0.0, "value-all":0.0, "value-all*":0.0}
-                self.score_cards[sc_key] = new_card
 
-            score_card = self.score_cards[sc_key]
-            score_card["n_image"] += 1
+            score_card = new_card
 
             verb_found = (torch.sum(sorted_idx[0:self.topk] == gt_v) == 1)
             if verb_found: score_card["verb"] += 1
@@ -62,11 +55,18 @@ class imsitu_scorer():
                         found = True
                         break
                 if not found: all_found = False
+                #both verb and at least one val found
                 if found and verb_found: score_card["value"] += 1
+                #at least one val found
                 if found: score_card["value*"] += 1
-
+            #both verb and all values found
+            score_card["value*"] /= gt_role_count
+            score_card["value"] /= gt_role_count
             if all_found and verb_found: score_card["value-all"] += 1
+            #all values found
             if all_found: score_card["value-all*"] += 1
+
+            self.score_cards.append(new_card)
 
     def combine(self, rv, card):
         for (k,v) in card.items(): rv[k] += v
@@ -74,28 +74,18 @@ class imsitu_scorer():
     def get_average_results(self, groups = []):
         #average across score cards.
         rv = {"verb":0, "value":0 , "value*":0 , "value-all":0, "value-all*":0}
-        agg_cards = {}
-        for (key, card) in self.score_cards.items():
-            (v,g) = key
-            if len(groups) == 0 or g in groups:
-                if v not in agg_cards:
-                    new_card = {"verb":0.0, "n_image":0.0, "value":0.0, "value*":0.0, "n_value":0.0, "value-all":0.0, "value-all*":0.0}
-                    agg_cards[v] = new_card
-                self.combine(agg_cards[v], card)
-        nverbs = len(agg_cards)
-        for (v, card) in agg_cards.items():
-            img = card["n_image"]
-            nvalue = card["n_value"]
-            rv["verb"] += card["verb"]/img
-            rv["value-all"] += card["value-all"]/img
-            rv["value-all*"] += card["value-all*"]/img
-            rv["value"] += card["value"]/nvalue
-            rv["value*"] += card["value*"]/nvalue
+        total_len = len(self.score_cards)
+        for card in self.score_cards:
+            rv["verb"] += card["verb"]
+            rv["value-all"] += card["value-all"]
+            rv["value-all*"] += card["value-all*"]
+            rv["value"] += card["value"]
+            rv["value*"] += card["value*"]
 
-        rv["verb"] /= nverbs
-        rv["value-all"] /= nverbs
-        rv["value-all*"] /= nverbs
-        rv["value"] /= nverbs
-        rv["value*"] /= nverbs
+        rv["verb"] /= total_len
+        rv["value-all"] /= total_len
+        rv["value-all*"] /= total_len
+        rv["value"] /= total_len
+        rv["value*"] /= total_len
 
         return rv

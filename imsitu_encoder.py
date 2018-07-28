@@ -85,9 +85,8 @@ class imsitu_encoder():
 
     def encode(self, item):
         verb = self.verb_embedding[self.verb_list.index(item['verb'])]
-        roles = self.verb2role_embedding[self.verb_list.index(item['verb'])]
-        '''actual_count = len(self.verb2_role_dict[item['verb']])
-        roles = roles_full[:actual_count]'''
+        roles = self.get_role_ids(item['verb'])
+
         all_frame_embedding_list = []
 
         for frame in item['frames']:
@@ -182,3 +181,21 @@ class imsitu_encoder():
                     mask[i][j] = mask[i][j].fill_(1)
 
         return embedding,mask
+
+    def get_role_ids(self, verb):
+        #print('verb', verb)
+        roles = self.verb2role_embedding[self.verb_list.index(verb)]
+        #print('roles', roles)
+        role_id = []
+
+        for role in roles:
+            val = role[role > 0]
+            if len(val) > 0:
+                _, id = torch.max(torch.unsqueeze(role,1), 0)
+                role_id.append(id)
+
+        pad = self.max_role_count - len(role_id)
+        for j in range(pad):
+            role_id.append(190)
+
+        return torch.tensor(role_id)
