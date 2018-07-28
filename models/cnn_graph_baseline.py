@@ -148,7 +148,12 @@ class baseline(nn.Module):
                 print('role embd' , embd)
                 break
             break'''
-        role_embedding = self.role_lookup_table(roles.type(torch.LongTensor))
+        roles = roles.type(torch.LongTensor)
+
+        if self.gpu_mode >= 0:
+            roles = roles.to(torch.device('cuda'))
+
+        role_embedding = self.role_lookup_table(roles)
         #print('role embedding', role_embedding[0][3])
 
         vert_no_verb = vert_states[:,1:]
