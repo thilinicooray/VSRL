@@ -167,20 +167,18 @@ class imsitu_encoder():
 
         return torch.stack(adj_matrix_list)
 
-    def apply_mask(self, roles, embedding):
-        mask = embedding
+    def apply_mask(self, roles, val):
+        mask = val.clone().fill_(1)
         batch_size = roles.size(0)
         for i in range(batch_size):
             for j in range(self.get_max_role_count()):
                 role = roles[i][j]
-                val = role[role > 0]
-                if not len(val) > 0:
-                    embedding[i][j] = embedding[i][j].fill_(0)
-                    mask[i][j] = mask[i][j].fill_(0)
-                else:
-                    mask[i][j] = mask[i][j].fill_(1)
+                if role == 190:
+                    #embedding[i][j] = embedding[i][j].fill_(0)
+                    mask[i,j:] = 0
+                    break
 
-        return embedding,mask
+        return mask
 
     def get_role_ids(self, verb):
         #print('verb', verb)
