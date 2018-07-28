@@ -98,4 +98,6 @@ def get_only_relevant_roles(gt_labels):
         if len(val) > 0:
             _, id = torch.max(torch.unsqueeze(role,1), 0)
             actual_ids.append(id.item())
+        else:
+            actual_ids.append(75000)
     return torch.tensor(actual_ids)

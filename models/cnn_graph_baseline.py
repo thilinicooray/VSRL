@@ -138,7 +138,7 @@ class baseline(nn.Module):
     def train_preprocess(self): return self.train_transform
     def dev_preprocess(self): return self.dev_transform
 
-    '''def forward(self, img, verbs, roles):
+    def forward(self, img, verbs, roles):
         #print('input size', im_data.size())
 
         img_embedding_batch = self.cnn(img)
@@ -163,12 +163,12 @@ class baseline(nn.Module):
 
         #original code use gold verbs to insert to role predict module (only at training )
         #print('roles', roles)
-        for i in range(roles.size(0)):
+        '''for i in range(roles.size(0)):
             for j in range(0,6):
                 embd = self.role_lookup_table(roles[i][j].type(torch.LongTensor))
                 print('role embd' , embd)
                 break
-            break
+            break'''
         roles = roles.type(torch.LongTensor)
 
         if self.gpu_mode >= 0:
@@ -201,9 +201,9 @@ class baseline(nn.Module):
 
         #print('out from forward :', verb_predict.size(), role_label_predict.size())
 
-        return verb_predict, role_label_predict'''
+        return verb_predict, role_label_predict
 
-    def forward(self, img, verbs, roles):
+    '''def forward(self, img, verbs, roles):
         #print('input size', im_data.size())
 
         img_embedding_batch = self.cnn(img)
@@ -230,7 +230,7 @@ class baseline(nn.Module):
 
         #print('out from forward :', verb_predict.size(), role_label_predict.size())
 
-        return verb_predict, role_label_predict
+        return verb_predict, role_label_predict'''
 
     def calculate_loss(self, verb_pred, gt_verbs, role_label_pred, gt_labels):
         '''criterion = nn.CrossEntropyLoss()
@@ -247,7 +247,7 @@ class baseline(nn.Module):
 
         final_loss = verb_loss + loss'''
 
-        criterion = nn.CrossEntropyLoss()
+        criterion = nn.CrossEntropyLoss(ignore_index=75000)
         pred_best = torch.max(F.softmax(verb_pred, dim = -1),1)[1]
         target = torch.max(gt_verbs,1)[1]
         #print('verb pred vs gt', pred_best, target)
@@ -262,7 +262,7 @@ class baseline(nn.Module):
                 actual_ids = utils.get_only_relevant_roles(gt_labels[i,index,:,:])
                 if self.gpu_mode >= 0:
                     actual_ids = actual_ids.to(torch.device('cuda'))
-                sub_loss += criterion(role_label_pred[i][:len(actual_ids)], actual_ids)
+                sub_loss += criterion(role_label_pred[i], actual_ids)
             loss += sub_loss
 
 
