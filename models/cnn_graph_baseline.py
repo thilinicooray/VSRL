@@ -277,10 +277,10 @@ class baseline(nn.Module):
             sub_loss = 0
             for index in range(gt_labels.size()[1]):
                 #print('roles :', torch.max(gt_labels[i,index,:,:],1)[1])
-                actual_ids = utils.get_only_relevant_roles(gt_labels[i,index,:,:])
+                '''actual_ids = utils.get_only_relevant_roles(gt_labels[i,index,:,:])
                 if self.gpu_mode >= 0:
-                    actual_ids = actual_ids.to(torch.device('cuda'))
-                sub_loss += criterion(role_label_pred[i], actual_ids)
+                    actual_ids = actual_ids.to(torch.device('cuda'))'''
+                sub_loss += criterion(role_label_pred[i], gt_labels[i,index,:])
             loss += sub_loss
 
 

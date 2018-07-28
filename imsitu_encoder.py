@@ -86,31 +86,7 @@ class imsitu_encoder():
     def encode(self, item):
         verb = self.verb_embedding[self.verb_list.index(item['verb'])]
         roles = self.get_role_ids(item['verb'])
-
-        all_frame_embedding_list = []
-
-        for frame in item['frames']:
-            label_embedding_list = []
-            for role,label in frame.items():
-                #use UNK when unseen labels come
-                if label in self.label_list:
-                    label_embedding = self.label_embedding[self.label_list.index(label)]
-                else:
-                    label_embedding = self.label_embedding[self.label_list.index('#UNK#')]
-
-                label_embedding_list.append(label_embedding)
-
-            role_padding_count = self.max_role_count - len(label_embedding_list)
-
-            for i in range(role_padding_count):
-                label_embedding_list.append(torch.zeros(len(self.label_list)))
-
-            all_frame_embedding_list.append(torch.stack(label_embedding_list))
-
-        if (len(all_frame_embedding_list)) != 3:
-            print('ALERT! : ', len(all_frame_embedding_list))
-
-        labels = torch.stack(all_frame_embedding_list)
+        labels = self.get_label_ids(item['frames'])
 
         #print('item encoding size : v r l', verb.size(), roles.size(), labels.size())
         #assuming labels are also in order of roles in encoder
@@ -197,3 +173,27 @@ class imsitu_encoder():
             role_id.append(190)
 
         return torch.tensor(role_id)
+
+    def get_label_ids(self, frames):
+        all_frame_embedding_list = []
+        for frame in frames:
+            label_embedding_list = []
+            for role,label in frame.items():
+                #use UNK when unseen labels come
+                if label in self.label_list:
+                    label_id = self.label_list.index(label)
+                else:
+                    label_id = self.label_list.index('#UNK#')
+
+                label_embedding_list.append(label_id)
+
+            role_padding_count = self.max_role_count - len(label_embedding_list)
+
+            for i in range(role_padding_count):
+                label_embedding_list.append(75000)
+
+            all_frame_embedding_list.append(torch.stack(label_embedding_list))
+
+        labels = torch.stack(all_frame_embedding_list)
+
+        return labels
