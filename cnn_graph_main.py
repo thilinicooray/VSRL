@@ -7,7 +7,7 @@ from models import cnn_graph_baseline
 import os
 from models import utils
 
-def train(model, train_loader, dev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, eval_frequency=500):
+def train(model, train_loader, dev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, eval_frequency=5000):
     model.train()
     train_loss = 0
     total_steps = 0
@@ -178,7 +178,7 @@ def main():
     if args.gpuid >= 0:
         #print('GPU enabled')
         model.cuda()
-    lr_set = [0.01]
+    lr_set = [0.1]
     decay_set = [5e-4]
 
     for lr in lr_set:
