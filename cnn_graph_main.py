@@ -107,7 +107,7 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
             #break
 
         print('Epoch ', epoch, ' completed!')
-        break
+        #break
 
 def eval(model, dev_loader, encoder, gpu_mode):
     model.eval()
