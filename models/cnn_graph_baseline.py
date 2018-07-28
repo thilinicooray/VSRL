@@ -219,10 +219,10 @@ class baseline(nn.Module):
             roles = roles.to(torch.device('cuda'))
 
         role_embedding = self.role_lookup_table(roles)
-        verb_expand = verb_init[:,0].expand(self.max_role_count, verb_init.size(0),verb_init.size(-1))
+        verb_expand = verb_init.expand(self.max_role_count, verb_init.size(0),verb_init.size(-1))
         verb_expand = verb_expand.transpose(1,0)
         role_verb = torch.mul(role_embedding, verb_expand)
-        
+
         verb_predict = self.verb_module(verb_init)
         #verb_predict = self.verb_module(vert_states[:,0])
 
