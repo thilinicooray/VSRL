@@ -28,7 +28,7 @@ class imsitu_scorer():
 
 
             gt_v = torch.max(gt_verb, 0)[1]
-            print('sorted idx:',self.topk, sorted_idx[:self.topk], gt_v)
+            #print('sorted idx:',self.topk, sorted_idx[:self.topk], gt_v)
             #print('groud truth verb id:', gt_v)
 
             if image_names is not None: _image = image_names[i]
