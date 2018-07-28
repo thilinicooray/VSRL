@@ -219,29 +219,14 @@ class baseline(nn.Module):
             roles = roles.to(torch.device('cuda'))
 
         role_embedding = self.role_lookup_table(roles)
-        #mask = self.encoder.
-        #print('role embedding', role_embedding[0][3])
-
-        '''vert_no_verb = vert_states[:,1:]
-        verb_expand = vert_states[:,0].expand(self.max_role_count, vert_states.size(0),vert_states.size(-1))
-        verb_expand = verb_expand.transpose(1,0)'''
-        role_verb = torch.mul(role_embedding, verb_init)
-        '''role_mul = torch.matmul(role_verb, vert_no_verb.transpose(-2, -1))#torch.mul(role_embedding, vert_state_expanded)
-        #print('cat :', role_mul[0,-1])
-        role_mul = role_mul.masked_fill(role_mul == 0, -1e9)
-
-        p_attn = F.softmax(role_mul, dim = -1)
-        mask = self.encoder.apply_mask(roles, p_attn)
-        p_attn = mask * p_attn
-
-        att_weighted_role = torch.matmul(p_attn, vert_no_verb)
-        #print('check', att_weighted_role[:,-1])
-        combined_role_val = att_weighted_role[:,0] * att_weighted_role[:,1] * att_weighted_role[:,2] * att_weighted_role[:,3] *att_weighted_role[:,4] *att_weighted_role[:,5]
-        verb_expanded = torch.mul(vert_states[:,0], torch.sum(att_weighted_role,1))'''
+        verb_expand = verb_init[:,0].expand(self.max_role_count, verb_init.size(0),verb_init.size(-1))
+        verb_expand = verb_expand.transpose(1,0)
+        role_verb = torch.mul(role_embedding, verb_expand)
+        
         verb_predict = self.verb_module(verb_init)
         #verb_predict = self.verb_module(vert_states[:,0])
 
-        role_label_predict = self.role_module(role_embedding)
+        role_label_predict = self.role_module(role_verb)
 
         #print('out from forward :', verb_predict.size(), role_label_predict.size())
 
