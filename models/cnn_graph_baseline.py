@@ -114,7 +114,8 @@ class baseline(nn.Module):
 
         self.verb_module = nn.Sequential(
             #nn.ReLU(),
-            nn.Linear(self.embedding_size, self.num_verbs)
+            nn.Linear(self.embedding_size, self.num_verbs),
+            nn.ReLU()
         )
 
         self.verb_module.apply(utils.init_weight)
@@ -127,7 +128,8 @@ class baseline(nn.Module):
 
         self.role_module = nn.Sequential(
             #nn.ReLU(),
-            nn.Linear(self.embedding_size*2, self.vocab_size)
+            nn.Linear(self.embedding_size*2, self.vocab_size),
+            nn.ReLU()
         )
         #self.hidden = self.init_hidden()
 
