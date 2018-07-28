@@ -122,23 +122,29 @@ class baseline(nn.Module):
         self.role_lookup_table = nn.Embedding(self.num_roles + 1, self.embedding_size, padding_idx=self.num_roles)
         utils.init_weight(self.role_lookup_table, pad_idx=self.num_roles)
 
-        '''self.role_att = nn.Sequential(
-            nn.LogSoftmax()
-        )'''
-
-        #self.role_att.apply(utils.init_weight)
+        self.lstm = nn.LSTM(self.embedding_size, self.embedding_size, num_layers=2, bidirectional=True)
+        utils.init_lstm(self.lstm)
 
         self.role_module = nn.Sequential(
             nn.ReLU(),
-            nn.Linear(self.embedding_size, self.vocab_size)
+            nn.Linear(self.embedding_size*2, self.vocab_size)
         )
+        #self.hidden = self.init_hidden()
 
         self.role_module.apply(utils.init_weight)
 
     def train_preprocess(self): return self.train_transform
     def dev_preprocess(self): return self.dev_transform
 
-    def forward(self, img, verbs, roles):
+    def init_hidden(self):
+        # Before we've done anything, we dont have any hidden state.
+        # Refer to the Pytorch documentation to see exactly
+        # why they have this dimensionality.
+        # The axes semantics are (num_layers * num_directions, minibatch_size, hidden_dim)
+        return (torch.autograd.Variable(torch.zeros(4, 64, self.hidden_dim)),
+                torch.autograd.Variable(torch.zeros(4, 64, self.hidden_dim)))
+
+    def forward(self, img, verbs, roles, hidden=None):
         #print('input size', im_data.size())
 
         img_embedding_batch = self.cnn(img)
@@ -197,7 +203,9 @@ class baseline(nn.Module):
         verb_predict = self.verb_module(verb_expanded)
         #verb_predict = self.verb_module(vert_states[:,0])
 
-        role_label_predict = self.role_module(att_weighted_role)
+        lstm_out, hidden = self.lstm(att_weighted_role, hidden)
+
+        role_label_predict = self.role_module(lstm_out)
 
         #print('out from forward :', verb_predict.size(), role_label_predict.size())
 
