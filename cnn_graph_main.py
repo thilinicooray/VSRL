@@ -178,8 +178,8 @@ def main():
     if args.gpuid >= 0:
         #print('GPU enabled')
         model.cuda()
-    lr_set = [0.001]
-    decay_set = [0]
+    lr_set = [1e-5]
+    decay_set = [5e-4]
 
     for lr in lr_set:
         for decay in decay_set:
