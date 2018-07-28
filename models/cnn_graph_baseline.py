@@ -141,8 +141,8 @@ class baseline(nn.Module):
         # Refer to the Pytorch documentation to see exactly
         # why they have this dimensionality.
         # The axes semantics are (num_layers * num_directions, minibatch_size, hidden_dim)
-        return (torch.autograd.Variable(torch.zeros(4, 64, self.embedding_size)),
-                torch.autograd.Variable(torch.zeros(4, 64, self.embedding_size)))
+        return (torch.autograd.Variable(torch.zeros(4, 6, self.embedding_size)),
+                torch.autograd.Variable(torch.zeros(4, 6, self.embedding_size)))
 
     def forward(self, img, verbs, roles, hidden=None):
         #print('input size', im_data.size())
