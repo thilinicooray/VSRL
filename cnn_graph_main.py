@@ -7,7 +7,7 @@ from models import cnn_graph_baseline
 import os
 from models import utils
 
-def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, encoder, gpu_mode, eval_frequency=5000):
+def train(model, train_loader, dev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, eval_frequency=5000):
     model.train()
     train_loss = 0
     total_steps = 0
@@ -105,7 +105,7 @@ def train(model, train_loader, dev_loader, optimizer, max_epoch, model_dir, enco
 
             del verb_predict, role_predict, loss, img, verb, roles, labels
             #break
-
+        scheduler.step()
         print('Epoch ', epoch, ' completed!')
         #break
 
@@ -176,7 +176,7 @@ def main():
     if args.gpuid >= 0:
         #print('GPU enabled')
         model.cuda()
-    lr_set = [0.0001]
+    lr_set = [0.001]
     decay_set = [0]
 
     for lr in lr_set:
@@ -184,10 +184,11 @@ def main():
             #lr, weight decay user param
             print('CURRENT PARAM SET : lr, decay :' , lr, decay)
             optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad,model.parameters()), lr=lr, weight_decay=decay)
+            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.85)
             #gradient clipping, grad check
 
             print('Model training started!')
-            train(model, train_loader, dev_loader, optimizer,200, 'trained_models', encoder, args.gpuid)
+            train(model, train_loader, dev_loader, optimizer, scheduler, 200, 'trained_models', encoder, args.gpuid)
 
 
 
