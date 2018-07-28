@@ -114,7 +114,7 @@ class baseline(nn.Module):
 
         self.verb_module = nn.Sequential(
             nn.ReLU(),
-            nn.Linear(self.embedding_size, self.num_verbs)
+            nn.Linear(self.embedding_size*2, self.num_verbs)
         )
 
         self.verb_module.apply(utils.init_weight)
@@ -207,13 +207,13 @@ class baseline(nn.Module):
         verb_expanded = torch.mul(vert_states[:,0], torch.sum(att_weighted_role,1))
         verb_predict = self.verb_module(verb_expanded)
         #verb_predict = self.verb_module(vert_states[:,0])
-        '''hidden = self.init_hidden()
+        hidden = self.init_hidden()
 
         lstm_out, hidden = self.lstm(att_weighted_role, hidden)
 
-        role_label_predict = self.role_module(lstm_out)'''
+        role_label_predict = self.role_module(lstm_out)
 
-        role_label_predict = self.role_module(att_weighted_role)
+        #role_label_predict = self.role_module(att_weighted_role)
 
         #print('out from forward :', verb_predict.size(), role_label_predict.size())
 
