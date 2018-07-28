@@ -170,7 +170,7 @@ class baseline(nn.Module):
         att_weighted_role = torch.matmul(p_attn, vert_no_verb)
         #print('check', att_weighted_role[:,-1])
         combined_role_val = att_weighted_role[:,0] * att_weighted_role[:,1] * att_weighted_role[:,2] * att_weighted_role[:,3] *att_weighted_role[:,4] *att_weighted_role[:,5]
-        verb_expanded = torch.mul(vert_states[:,0], torch.sum(att_weighted_role,1))
+        verb_expanded = torch.sum(vert_states[:,0], torch.sum(att_weighted_role,1))
         verb_predict = self.verb_module(verb_expanded)
         #verb_predict = self.verb_module(vert_states[:,0])
 
