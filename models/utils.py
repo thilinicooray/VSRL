@@ -40,6 +40,23 @@ def init_gru_cell(input):
         weight.data.zero_()
         weight.data[input.hidden_size: 2 * input.hidden_size] = 1
 
+def init_lstm(input_lstm):
+
+    for ind in range(0, input_lstm.num_layers):
+        weight = eval('input_lstm.weight_ih_l'+str(ind))
+        nn.init.orthogonal(weight)
+        weight = eval('input_lstm.weight_hh_l'+str(ind))
+        nn.init.orthogonal(weight)
+
+    if input_lstm.bias:
+        for ind in range(0, input_lstm.num_layers):
+            weight = eval('input_lstm.bias_ih_l'+str(ind))
+            weight.data.zero_()
+            weight.data[input_lstm.hidden_size: 2 * input_lstm.hidden_size] = 1
+            weight = eval('input_lstm.bias_hh_l'+str(ind))
+            weight.data.zero_()
+            weight.data[input_lstm.hidden_size: 2 * input_lstm.hidden_size] = 1
+
 
 def build_mlp(dim_list, activation='relu', batch_norm='none',
               dropout=0, final_non_linearity=True):
