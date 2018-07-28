@@ -25,18 +25,18 @@ def init_weight(linear, pad_idx=None):
 
 def init_gru_cell(input):
 
-    weight = eval('input_lstm.weight_ih')
+    weight = eval('input.weight_ih')
     bias = np.sqrt(6.0 / (weight.size(0) / 4 + weight.size(1)))
     nn.init.uniform(weight, -bias, bias)
-    weight = eval('input_lstm.weight_hh')
+    weight = eval('input.weight_hh')
     bias = np.sqrt(6.0 / (weight.size(0) / 4 + weight.size(1)))
     nn.init.uniform(weight, -bias, bias)
 
     if input.bias:
-        weight = eval('input_lstm.bias_ih' )
+        weight = eval('input.bias_ih' )
         weight.data.zero_()
         weight.data[input.hidden_size: 2 * input.hidden_size] = 1
-        weight = eval('input_lstm.bias_hh')
+        weight = eval('input.bias_hh')
         weight.data.zero_()
         weight.data[input.hidden_size: 2 * input.hidden_size] = 1
 
