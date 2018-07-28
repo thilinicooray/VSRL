@@ -141,8 +141,13 @@ class baseline(nn.Module):
         # Refer to the Pytorch documentation to see exactly
         # why they have this dimensionality.
         # The axes semantics are (num_layers * num_directions, minibatch_size, hidden_dim)
-        return (torch.autograd.Variable(torch.zeros(4, 6, self.embedding_size)),
-                torch.autograd.Variable(torch.zeros(4, 6, self.embedding_size)))
+        tensor = torch.zeros(4, 6, self.embedding_size)
+        tensor1 = torch.zeros(4, 6, self.embedding_size)
+        if self.gpu_mode >= 0:
+            tensor = tensor.to(torch.device('cuda'))
+            tensor1 = tensor1.to(torch.device('cuda'))
+        return (torch.autograd.Variable(tensor),
+                torch.autograd.Variable(tensor1))
 
     def forward(self, img, verbs, roles, hidden=None):
         #print('input size', im_data.size())
