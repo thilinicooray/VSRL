@@ -129,7 +129,7 @@ class baseline(nn.Module):
             nn.ReLU(),
             nn.Linear(self.embedding_size*2, self.vocab_size)
         )
-        self.hidden = self.init_hidden()
+        #self.hidden = self.init_hidden()
 
         self.role_module.apply(utils.init_weight)
 
@@ -207,8 +207,9 @@ class baseline(nn.Module):
         verb_expanded = torch.mul(vert_states[:,0], torch.sum(att_weighted_role,1))
         verb_predict = self.verb_module(verb_expanded)
         #verb_predict = self.verb_module(vert_states[:,0])
+        hidden = self.init_hidden()
 
-        lstm_out, hidden = self.lstm(att_weighted_role, self.hidden)
+        lstm_out, hidden = self.lstm(att_weighted_role, hidden)
 
         role_label_predict = self.role_module(lstm_out)
 
