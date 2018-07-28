@@ -26,13 +26,13 @@ class action_graph(nn.Module):
 
         self.edge_att = nn.Sequential(
             #nn.Linear(self.edge_state_dim * 2, 1),
-            nn.ReLU(),
+            nn.Tanh(),
             nn.LogSoftmax()
         )
 
         self.vert_att = nn.Sequential(
             #nn.Linear(self.vert_state_dim * 2, 1),
-            nn.ReLU(),
+            nn.Tanh(),
             nn.LogSoftmax()
         )
 
