@@ -186,7 +186,7 @@ def main():
             #lr, weight decay user param
             print('CURRENT PARAM SET : lr, decay :' , lr, decay)
             optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad,model.parameters()), lr=lr, weight_decay=decay)
-            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.85)
+            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.85)
             #gradient clipping, grad check
 
             print('Model training started!')
