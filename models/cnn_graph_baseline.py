@@ -122,8 +122,8 @@ class baseline(nn.Module):
         self.role_lookup_table = nn.Embedding(self.num_roles + 1, self.embedding_size, padding_idx=self.num_roles)
         utils.init_weight(self.role_lookup_table, pad_idx=self.num_roles)
 
-        self.lstm = nn.LSTM(self.embedding_size, self.embedding_size, num_layers=2, bidirectional=True)
-        utils.init_lstm(self.lstm)
+        '''self.lstm = nn.LSTM(self.embedding_size, self.embedding_size, num_layers=2, bidirectional=True)
+        utils.init_lstm(self.lstm)'''
 
         self.role_module = nn.Sequential(
             nn.ReLU(),
@@ -207,11 +207,13 @@ class baseline(nn.Module):
         verb_expanded = torch.mul(vert_states[:,0], torch.sum(att_weighted_role,1))
         verb_predict = self.verb_module(verb_expanded)
         #verb_predict = self.verb_module(vert_states[:,0])
-        hidden = self.init_hidden()
+        '''hidden = self.init_hidden()
 
         lstm_out, hidden = self.lstm(att_weighted_role, hidden)
 
-        role_label_predict = self.role_module(lstm_out)
+        role_label_predict = self.role_module(lstm_out)'''
+
+        role_label_predict = self.role_module(att_weighted_role)
 
         #print('out from forward :', verb_predict.size(), role_label_predict.size())
 
