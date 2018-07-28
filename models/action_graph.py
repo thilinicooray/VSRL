@@ -21,8 +21,8 @@ class action_graph(nn.Module):
 
         utils.init_gru_cell(self.vert_gru)
         utils.init_gru_cell(self.edge_gru)
-        self.vert_state
-        self.edge_state
+        self.vert_state = torch.zeros(self.num_regions + 1, self.vert_state_dim)
+        self.edge_state = torch.zeros(self.num_regions, self.edge_state_dim)
         torch.nn.init.xavier_normal_(self.vert_state)
         torch.nn.init.xavier_normal_(self.edge_state)
         if self.gpu_mode >= 0:
