@@ -202,6 +202,7 @@ class baseline(nn.Module):
         verb_expanded = torch.mul(vert_states[:,0], torch.sum(att_weighted_role,1))
         verb_predict = self.verb_module(verb_expanded)
         #verb_predict = self.verb_module(vert_states[:,0])
+        hidden = self.init_hidden()
 
         lstm_out, hidden = self.lstm(att_weighted_role, hidden)
 
