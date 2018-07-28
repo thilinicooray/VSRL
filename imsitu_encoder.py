@@ -175,9 +175,9 @@ class imsitu_encoder():
         return torch.tensor(role_id)
 
     def get_label_ids(self, frames):
-        all_frame_embedding_list = []
+        all_frame_id_list = []
         for frame in frames:
-            label_embedding_list = []
+            label_id_list = []
             for role,label in frame.items():
                 #use UNK when unseen labels come
                 if label in self.label_list:
@@ -185,15 +185,15 @@ class imsitu_encoder():
                 else:
                     label_id = self.label_list.index('#UNK#')
 
-                label_embedding_list.append(label_id)
+                label_id_list.append(label_id)
 
-            role_padding_count = self.max_role_count - len(label_embedding_list)
+            role_padding_count = self.max_role_count - len(label_id_list)
 
             for i in range(role_padding_count):
-                label_embedding_list.append(75000)
+                label_id_list.append(75000)
 
-            all_frame_embedding_list.append(torch.stack(label_embedding_list))
+            all_frame_id_list.append(label_id_list)
 
-        labels = torch.stack(all_frame_embedding_list)
+        labels = torch.stack(all_frame_id_list)
 
         return labels
