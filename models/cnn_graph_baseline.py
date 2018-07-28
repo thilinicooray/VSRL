@@ -127,7 +127,7 @@ class baseline(nn.Module):
 
         self.role_module = nn.Sequential(
             nn.ReLU(),
-            nn.Linear(self.embedding_size*2, self.vocab_size)
+            nn.Linear(self.embedding_size, self.vocab_size)
         )
         #self.hidden = self.init_hidden()
 
