@@ -113,7 +113,7 @@ class baseline(nn.Module):
         self.graph = action_graph(self.cnn.segment_count(), self.num_graph_steps, self.gpu_mode)
 
         self.verb_module = nn.Sequential(
-            nn.ReLU(),
+            #nn.ReLU(),
             nn.Linear(self.embedding_size*2, self.num_verbs)
         )
 
@@ -126,7 +126,7 @@ class baseline(nn.Module):
         utils.init_lstm(self.lstm)'''
 
         self.role_module = nn.Sequential(
-            nn.ReLU(),
+            #nn.ReLU(),
             nn.Linear(self.embedding_size, self.vocab_size)
         )
         #self.hidden = self.init_hidden()

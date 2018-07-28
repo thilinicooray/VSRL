@@ -26,14 +26,14 @@ class action_graph(nn.Module):
 
         self.edge_att = nn.Sequential(
             #nn.Linear(self.edge_state_dim * 2, 1),
-            nn.Sigmoid(),
-            nn.LogSoftmax()
+            #nn.Sigmoid(),
+            nn.Softmax()
         )
 
         self.vert_att = nn.Sequential(
             #nn.Linear(self.vert_state_dim * 2, 1),
-            nn.Sigmoid(),
-            nn.LogSoftmax()
+            #nn.Sigmoid(),
+            nn.Softmax()
         )
 
         '''self.edge_att.apply(utils.init_weight)#actually pytorch init does reset param
