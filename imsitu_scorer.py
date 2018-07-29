@@ -23,8 +23,9 @@ class imsitu_scorer():
             gt_verb = gt_verbs[i]
             label_pred = labels_predict[i]
             gt_label = gt_labels[i]
-            #print('check sizes:', verb_pred.size(), gt_verb.size(), label_pred.size(), gt_label.size())
+            print('check sizes:', verb_pred.size(), gt_verb.size(), label_pred.size(), gt_label.size())
             sorted_idx = torch.sort(verb_pred, 0, True)[1]
+            print('verb pred' , sorted_idx[0:self.topk], gt_verb)
 
 
             gt_v = gt_verb
@@ -53,11 +54,12 @@ class imsitu_scorer():
 
             for k in range(gt_role_count):
                 label_id = torch.max(label_pred[k],0)[1]
-                #print('predicted label id', label_id)
+                sorted_idx1 = torch.sort(label_pred[k], 0, True)[1]
+                print('predicted label id', label_id, sorted_idx1[0])
                 found = False
                 for r in range(0,self.nref):
                     gt_label_id = gt_label[r][k]
-                    #print('ground truth label id = ', gt_label_id)
+                    print('ground truth label id = ', gt_label_id)
                     if label_id == gt_label_id:
                         found = True
                         break
