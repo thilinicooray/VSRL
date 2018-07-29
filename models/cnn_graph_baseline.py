@@ -267,7 +267,7 @@ class baseline(nn.Module):
 
         criterion = nn.CrossEntropyLoss(ignore_index=75000)
         pred_best = torch.max(F.softmax(verb_pred, dim = -1),1)[1]
-        target = torch.max(gt_verbs,1)[1]
+        target = gt_verbs
         #print('verb pred vs gt', pred_best, target)
         verb_loss = criterion(verb_pred, target)
         #this is a multi label classification problem

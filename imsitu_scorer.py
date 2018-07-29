@@ -27,7 +27,7 @@ class imsitu_scorer():
             sorted_idx = torch.sort(verb_pred, 0, True)[1]
 
 
-            gt_v = torch.max(gt_verb, 0)[1]
+            gt_v = gt_verb
             #print('sorted idx:',self.topk, sorted_idx[:self.topk], gt_v)
             #print('groud truth verb id:', gt_v)
 
@@ -56,7 +56,7 @@ class imsitu_scorer():
                 #print('predicted label id', label_id)
                 found = False
                 for r in range(0,self.nref):
-                    gt_label_id = torch.max(gt_label[r][k], 0)[1]
+                    gt_label_id = gt_label[r][k]
                     #print('ground truth label id = ', gt_label_id)
                     if label_id == gt_label_id:
                         found = True

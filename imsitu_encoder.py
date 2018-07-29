@@ -84,7 +84,7 @@ class imsitu_encoder():
 
 
     def encode(self, item):
-        verb = self.verb_embedding[self.verb_list.index(item['verb'])]
+        verb = self.verb_list.index(item['verb'])
         roles = self.get_role_ids(item['verb'])
         labels = self.get_label_ids(item['frames'])
 
