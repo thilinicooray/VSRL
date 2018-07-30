@@ -106,15 +106,15 @@ def format_dict(d, s, p):
         rv+=p+str(k) + ":" + s.format(v*100)
     return rv
 
-def get_only_relevant_roles(gt_labels):
+def cross_entropy_loss(pred, target, ignore_index=None):
+    #-x[class] + log (sum_j exp(x[j]))
+    if target == ignore_index:
+        #print('no loss')
+        return 0
+    _x_class = - pred[target]
+    denom = torch.log(torch.sum(torch.exp(pred)))
 
-    actual_ids = []
+    loss = _x_class + denom
+    #print('loss ', loss)
+    return loss
 
-    for role in gt_labels:
-        val = role[role > 0]
-        if len(val) > 0:
-            _, id = torch.max(torch.unsqueeze(role,1), 0)
-            actual_ids.append(id.item())
-        else:
-            actual_ids.append(75000)
-    return torch.tensor(actual_ids)

@@ -18,7 +18,8 @@ class imsitu_encoder():
         label_frequency = {}
         self.max_role_count = 0
         self.role2_label = {}
-        self.role2_verb = {}
+        self.main_roles = ['agent', 'place', 'tool', 'item']
+        self.role_cat = ['agent', 'place', 'tool', 'item', 'other']
 
         for img_id in train_set:
             img = train_set[img_id]
@@ -33,72 +34,81 @@ class imsitu_encoder():
                         self.role_list.append(role)
                     if role not in self.verb2_role_dict[current_verb]:
                         self.verb2_role_dict[current_verb].append(role)
-                    if len(self.verb2_role_dict[current_verb]) > self.max_role_count:
-                        self.max_role_count = len(self.verb2_role_dict[current_verb])
                     if role not in self.role2_label:
                         self.role2_label[role] = []
                     if label not in self.role2_label[role]:
                         self.role2_label[role].append(label)
-                    if role not in self.role2_verb:
+                    '''if role not in self.role2_verb:
                         self.role2_verb[role] = []
                     if current_verb not in self.role2_verb[role]:
-                        self.role2_verb[role].append(current_verb)
+                        self.role2_verb[role].append(current_verb)'''
                     if label not in self.label_list:
                         if label not in label_frequency:
                             label_frequency[label] = 1
                         else:
                             label_frequency[label] += 1
                         #only labels occur at least 5 times are considered
-                        if label_frequency[label] == 5:
+                        if label_frequency[label] == 20:
                             self.label_list.append(label)
+
+        for (k,v) in self.verb2_role_dict.items():
+            i = 0
+            for role in v:
+                if role not in self.main_roles:
+                    i += 1
+            if i > self.max_role_count:
+                self.max_role_count = i
+
+        self.max_role_count += 4
+
+        updated_role2_label = {}
+        for (k,v) in self.role2_label.items():
+            new_list = ['#UNK#']
+            for label in v:
+                if label in self.label_list and label not in new_list:
+                    new_list.append(label)
+            updated_role2_label[k] = new_list
+            #print('label count', k, len(v))
+
+        self.role2_label = updated_role2_label
+        updated_role2_label = {}
+        for (k,v) in self.role2_label.items():
+            if k in self.main_roles:
+                updated_role2_label[k] = v
+            else:
+                if 'other' not in updated_role2_label:
+                    updated_role2_label['other'] = v
+                else:
+                    updated_role2_label['other'].extend(x for x in v if x not in updated_role2_label['other'])
+
+        self.role2_label = updated_role2_label
+
+        self.role_start_idx = []
+        self.role_end_idx = []
+
+        for p in range(0, self.max_role_count):
+            if p == 0:
+                self.role_start_idx.append(0)
+                self.role_end_idx.append(len(self.role2_label['agent']))
+            elif p == 1:
+                self.role_start_idx.append(self.role_end_idx[-1])
+                self.role_end_idx.append(self.role_end_idx[-1] + len(self.role2_label['place']))
+            elif p == 2:
+                self.role_start_idx.append(self.role_end_idx[-1])
+                self.role_end_idx.append(self.role_end_idx[-1] + len(self.role2_label['tool']))
+            elif p == 3:
+                self.role_start_idx.append(self.role_end_idx[-1])
+                self.role_end_idx.append(self.role_end_idx[-1] + len(self.role2_label['item']))
+            else:
+                self.role_start_idx.append(self.role_end_idx[-1])
+                self.role_end_idx.append(self.role_end_idx[-1] + len(self.role2_label['other']))
 
         print('train set stats: \n\t verb count:', len(self.verb_list), '\n\t role count:',len(self.role_list),
               '\n\t label count:', len(self.label_list) ,
               '\n\t max role count:', self.max_role_count)
 
-        #self.save_stat(self.role2_label, 'role2label')
-        #self.save_stat(self.role2_verb, 'role2verb')
 
-        self.verb_embedding = torch.squeeze(torch.eye(len(self.verb_list)).view(len(self.verb_list),len(self.verb_list),1))
-        self.role_embedding = torch.squeeze(torch.eye(len(self.role_list)).view(len(self.role_list),len(self.role_list),1))
-        self.label_embedding = torch.squeeze(torch.eye(len(self.label_list)).view(len(self.label_list),len(self.label_list),1))
-
-        '''print('embedding sizes for verb, role and label ', self.verb_embedding.size(), self.role_embedding.size(),
-              self.label_embedding.size() )'''
-
-        verb2role_embedding_list = []
-        for verb_id in range(len(self.verb_list)):
-            current_role_list = self.verb2_role_dict[self.verb_list[verb_id]]
-
-            role_embedding_verb = []
-            for role in current_role_list:
-                role_id = self.role_list.index(role)
-                embedding = self.role_embedding[role_id]
-                role_embedding_verb.append(embedding)
-
-            padding_count = self.max_role_count - len(current_role_list)
-
-            for i in range(padding_count):
-                role_embedding_verb.append(torch.zeros(len(self.role_list)))
-
-            verb2role_embedding_list.append(torch.stack(role_embedding_verb))
-
-        self.verb2role_embedding = torch.stack(verb2role_embedding_list)
-
-        '''print('Final check')
-        rand_verb = random.choice(self.verb_list)
-        rand_verb_id = self.verb_list.index(rand_verb)
-        print('selected verb and id :', rand_verb, rand_verb_id)
-        print('verb embedding \n', self.verb_embedding[rand_verb_id].size())
-        print(self.verb_embedding[rand_verb_id].t())
-        print('role details : \n')
-        for role in verb2_role_dict[rand_verb]:
-            print(role, self.role_list.index(role))
-            idx = verb2_role_dict[rand_verb].index(role)
-            print('role embedding \n', self.verb2role_embedding[rand_verb_id][idx].t())'''
-
-
-    '''def save_stat(self, dict, filename):
+    def save_stat(self, dict, filename):
         newdict = {}
         for y in dict.items():
             newdict[y[0]] = len(y[1])
@@ -108,7 +118,7 @@ class imsitu_encoder():
         import pandas as pd
 
         (pd.DataFrame.from_dict(data=d_sorted_by_value, orient='index')
-         .to_csv(filename+'.csv', header=False))'''
+         .to_csv(filename+'.csv', header=False))
 
 
     def encode(self, item):
@@ -186,15 +196,19 @@ class imsitu_encoder():
 
     def get_role_ids(self, verb):
         #print('verb', verb)
-        roles = self.verb2role_embedding[self.verb_list.index(verb)]
-        #print('roles', roles)
+        roles = self.verb2_role_dict[verb]
+        #print('roles', len(roles))
+        #add main roles for all
         role_id = []
+        main_role_ids = []
+        for element in self.main_roles:
+            main_role_ids.append(self.role_list.index(element))
+        role_id = main_role_ids
+        #print('role is list', len(main_role_ids))
 
         for role in roles:
-            val = role[role > 0]
-            if len(val) > 0:
-                _, id = torch.max(torch.unsqueeze(role,1), 0)
-                role_id.append(id)
+            if self.role_list.index(role) not in role_id:
+                role_id.append(self.role_list.index(role))
 
         pad = self.max_role_count - len(role_id)
         for j in range(pad):
@@ -203,22 +217,39 @@ class imsitu_encoder():
         return torch.tensor(role_id)
 
     def get_label_ids(self, frames):
+
         all_frame_id_list = []
         for frame in frames:
             label_id_list = []
-            for role,label in frame.items():
-                #use UNK when unseen labels come
-                if label in self.label_list:
-                    label_id = self.label_list.index(label)
-                else:
-                    label_id = self.label_list.index('#UNK#')
 
-                label_id_list.append(label_id)
+            for main_role in self.main_roles:
+                found = False
+                for role,label in frame.items():
+                    if role == main_role:
+                        #use UNK when unseen labels come
+                        found = True
+                        if label in self.role2_label[main_role]:
+                            label_id = self.role2_label[main_role].index(label)
+                        else:
+                            label_id = self.role2_label[main_role].index('#UNK#')
+
+                        label_id_list.append(label_id)
+                if not found:
+                    label_id_list.append(len(self.role2_label[main_role]))
+
+            for role,label in frame.items():
+                if role not in self.main_roles:
+                    if label in self.role2_label[main_role]:
+                        label_id = self.role2_label['other'].index(label)
+                    else:
+                        label_id = self.role2_label['other'].index('#UNK#')
+
+                    label_id_list.append(label_id)
 
             role_padding_count = self.max_role_count - len(label_id_list)
 
             for i in range(role_padding_count):
-                label_id_list.append(self.get_num_labels())
+                label_id_list.append(len(self.role2_label['other']))
 
             all_frame_id_list.append(torch.tensor(label_id_list))
 

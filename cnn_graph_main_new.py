@@ -1,9 +1,9 @@
 import torch
-from imsitu_encoder import imsitu_encoder
+from imsitu_encoder_new import imsitu_encoder
 from imsitu_loader import imsitu_loader
-from imsitu_scorer import imsitu_scorer
+from imsitu_scorer_updated import imsitu_scorer
 import json
-from models import cnn_graph_baseline
+from models import cnn_graph_baseline_new
 import os
 from models import utils
 
@@ -61,8 +61,8 @@ def train(model, train_loader, dev_loader, optimizer, scheduler, max_epoch, mode
 
             train_loss += loss.data.item()
 
-            top1.add_point(verb_predict, verb, role_predict, labels)
-            top5.add_point(verb_predict, verb, role_predict, labels)
+            top1.add_point(verb_predict, verb, role_predict, labels, roles)
+            top5.add_point(verb_predict, verb, role_predict, labels, roles)
 
 
             if total_steps % print_freq == 0:
@@ -142,8 +142,8 @@ def eval(model, dev_loader, encoder, gpu_mode):
             verb_predict, role_predict = model(img, verb, roles)
             loss = model.calculate_loss(verb_predict, verb, role_predict, labels)
             val_loss += loss.data[0]
-            top1.add_point(verb_predict, verb, role_predict, labels)
-            top5.add_point(verb_predict, verb, role_predict, labels)
+            top1.add_point(verb_predict, verb, role_predict, labels, roles)
+            top5.add_point(verb_predict, verb, role_predict, labels, roles)
 
             del verb_predict, role_predict, img, verb, roles, labels, loss
 
@@ -163,11 +163,11 @@ def main():
     train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)
 
-    model = cnn_graph_baseline.baseline(encoder, args.gpuid)
+    model = cnn_graph_baseline_new.baseline(encoder, args.gpuid)
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder, model.train_preprocess())
 
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=64, shuffle=True, num_workers=4)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=16, shuffle=True, num_workers=0)
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder, model.train_preprocess())
