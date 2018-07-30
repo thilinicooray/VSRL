@@ -67,6 +67,35 @@ class resnet_modified_small(nn.Module):
 
         return torch.cat((torch.unsqueeze(x_full,1), x_full_segment), 1)
 
+class resnet_modified_small1(nn.Module):
+    def __init__(self):
+        super(resnet_modified_small1, self).__init__()
+        self.resnet = tv.models.resnet34(pretrained=True)
+        #probably want linear, relu, dropout
+        self.linear = nn.Linear(7*7*512, 1024)
+        self.dropout2d = nn.Dropout2d(.5)
+        self.dropout = nn.Dropout(.5)
+        self.relu = nn.LeakyReLU()
+        utils.init_weight(self.linear)
+
+    def base_size(self): return 512
+    def rep_size(self): return 1024
+
+    def forward(self, x):
+        x = self.resnet.conv1(x)
+        x = self.resnet.bn1(x)
+        x = self.resnet.relu(x)
+        x = self.resnet.maxpool(x)
+
+        x = self.resnet.layer1(x)
+        x = self.resnet.layer2(x)
+        x = self.resnet.layer3(x)
+        x = self.resnet.layer4(x)
+
+        x = self.dropout2d(x)
+
+        return self.dropout(self.relu(self.linear(x.view(-1, 7*7*self.base_size()))))
+
 class baseline(nn.Module):
 
     def __init__(self, encoder, gpu_mode,cnn_type='resnet_34'):
@@ -105,13 +134,13 @@ class baseline(nn.Module):
         elif cnn_type == 'rn_conv':
             self.cnn = ConvInputModel()'''
         if cnn_type == 'resnet_34':
-            self.cnn = resnet_modified_small()
+            self.cnn = resnet_modified_small1()
         else:
             print('unknown base network')
             exit()
         self.img_size = self.cnn.base_size()
 
-        self.graph = action_graph(self.cnn.segment_count(), self.num_graph_steps, self.gpu_mode)
+        #self.graph = action_graph(self.cnn.segment_count(), self.num_graph_steps, self.gpu_mode)
 
         self.verb_module = nn.Sequential(
             nn.ReLU(),
@@ -163,7 +192,7 @@ class baseline(nn.Module):
         #print('cnn out size', img_embedding_batch.size())
 
         #initialize verb node with summation of all region feature vectors
-        verb_init = img_embedding_batch[:,0]
+        '''verb_init = img_embedding_batch[:,0]
         #print('verb_init', verb_init.size(), torch.unsqueeze(verb_init, 1).size())
 
         vert_init = img_embedding_batch
@@ -179,23 +208,23 @@ class baseline(nn.Module):
         #print('out from graph :', vert_states.size(), edge_states.size())
 
         #original code use gold verbs to insert to role predict module (only at training )
-        #print('roles', roles)
+        #print('roles', roles)'''
         '''for i in range(roles.size(0)):
             for j in range(0,6):
                 embd = self.role_lookup_table(roles[i][j].type(torch.LongTensor))
                 print('role embd' , embd)
                 break
             break'''
-        roles = roles.type(torch.LongTensor)
+        '''roles = roles.type(torch.LongTensor)
 
         if self.gpu_mode >= 0:
             roles = roles.to(torch.device('cuda'))
 
-        role_embedding = self.role_lookup_table(roles)
+        role_embedding = self.role_lookup_table(roles)'''
         #mask = self.encoder.
         #print('role embedding', role_embedding[0][3])
 
-        vert_no_verb = vert_states[:,1:]
+        '''vert_no_verb = vert_states[:,1:]
         verb_expand = vert_states[:,0].expand(self.max_role_count, vert_states.size(0),vert_states.size(-1))
         verb_expand = verb_expand.transpose(1,0)
         role_verb = torch.mul(role_embedding, verb_expand)
@@ -213,22 +242,23 @@ class baseline(nn.Module):
         #print('attention :', att_weighted_role.size(), att_weighted_role)
         #print('check', att_weighted_role[:,-1])
         combined_role_val = att_weighted_role[:,0] * att_weighted_role[:,1] * att_weighted_role[:,2] * att_weighted_role[:,3] *att_weighted_role[:,4] *att_weighted_role[:,5]
-        verb_expanded = torch.mul(vert_states[:,0], torch.sum(att_weighted_role,1))
-        verb_predict = self.verb_module(verb_expanded)
-        #verb_predict = self.verb_module(vert_states[:,0])
+        #verb_expanded = torch.mul(vert_states[:,0], torch.sum(att_weighted_role,1))
+        verb_predict = self.verb_module(vert_states[:,0])
+        #verb_predict = self.verb_module(vert_states[:,0])'''
         '''hidden = self.init_hidden()
 
         lstm_out, hidden = self.lstm(att_weighted_role, hidden)
 
         role_label_predict = self.role_module(lstm_out)'''
+        verb_predict = self.verb_module(img_embedding_batch)
         for i,module in enumerate(self.role_module):
             if i < 4:
                 if i == 0:
-                    role_label_predict = module(att_weighted_role[:,i])
+                    role_label_predict = module(img_embedding_batch)
                 else:
-                    role_label_predict = torch.cat((role_label_predict.clone(), module(att_weighted_role[:,i])), 1)
+                    role_label_predict = torch.cat((role_label_predict.clone(), module(img_embedding_batch)), 1)
             else:
-                pred = module(att_weighted_role[:,4:])
+                pred = module(img_embedding_batch)
                 pred = pred.view(batch_size, -1, pred.size(-1))
 
                 for i in range(0,3):
