@@ -40,7 +40,7 @@ class resnet_modified_small(nn.Module):
         self.dropout2d1 = nn.Dropout2d(.5)
         self.dropout1 = nn.Dropout(.5)
         self.relu1 = nn.LeakyReLU()
-        init.xavier_normal_(self.linear1.weight)
+        init.xavier_normal(self.linear1.weight)
 
     def base_size(self): return 512
     def segment_count(self): return 128
