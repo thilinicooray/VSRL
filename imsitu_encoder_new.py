@@ -239,7 +239,7 @@ class imsitu_encoder():
 
             for role,label in frame.items():
                 if role not in self.main_roles:
-                    if label in self.role2_label[main_role]:
+                    if label in self.role2_label['other']:
                         label_id = self.role2_label['other'].index(label)
                     else:
                         label_id = self.role2_label['other'].index('#UNK#')
