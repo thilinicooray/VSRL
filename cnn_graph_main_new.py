@@ -157,8 +157,8 @@ def main():
 
     args = parser.parse_args()
 
-    dataset_folder = 'imsitu_data'
-    imgset_folder = 'of500_images_resized'
+    dataset_folder = 'imSitu'
+    imgset_folder = 'resized_256'
 
     train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)
