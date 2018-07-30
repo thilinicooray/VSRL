@@ -259,10 +259,10 @@ class baseline(nn.Module):
                     role_label_predict = torch.cat((role_label_predict.clone(), module(img_embedding_batch)), 1)
             else:
                 pred = module(img_embedding_batch)
-                pred = pred.view(batch_size, -1, pred.size(-1))
+                #pred = pred.view(batch_size, -1, pred.size(-1))
 
                 for i in range(0,3):
-                    role_label_predict = torch.cat((role_label_predict.clone(), pred[:, i]), 1)
+                    role_label_predict = torch.cat((role_label_predict.clone(), pred), 1)
 
         #print('out from forward :', role_label_predict.size())
 
