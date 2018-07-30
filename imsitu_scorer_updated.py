@@ -67,8 +67,8 @@ class imsitu_scorer():
                 if found and verb_found: score_card["value"] += 1
                 #at least one val found
                 if found: score_card["value*"] += 1
-            if self.topk == 1:
-                print('predicted labels :',pred_list)
+            '''if self.topk == 1:
+                print('predicted labels :',pred_list)'''
             #both verb and all values found
             score_card["value*"] /= gt_role_count
             score_card["value"] /= gt_role_count
