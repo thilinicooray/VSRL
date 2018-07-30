@@ -308,9 +308,9 @@ class baseline(nn.Module):
 
         #this potentially does not work with parrelism, in which case we should figure something out
         if self.prediction_type == "max_max":
-            rv = (rep, v_potential, vrn_potential, norm, v_max, vr_maxi_grouped)
+            rv = (vert_states[:,0], v_potential, vrn_potential, norm, v_max, vr_maxi_grouped)
         elif self.prediction_type == "max_marginal":
-            rv = (rep, v_potential, vrn_potential, norm, v_marginal, vr_maxi_grouped)
+            rv = (vert_states[:,0], v_potential, vrn_potential, norm, v_marginal, vr_maxi_grouped)
         else:
             print ("unkown inference type")
             rv = ()
