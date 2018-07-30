@@ -172,8 +172,8 @@ class baseline(nn.Module):
         #print self.v_vr
         #graph
         self.graph = action_graph(self.cnn.segment_count(), self.num_graph_steps, self.gpu_mode)
-        self.role_lookup_table = nn.Embedding(self.num_roles + 1, self.embedding_size, padding_idx=self.num_roles)
-        utils.init_weight(self.role_lookup_table, pad_idx=self.num_roles)
+        '''self.role_lookup_table = nn.Embedding(self.num_roles + 1, self.embedding_size, padding_idx=self.num_roles)
+        utils.init_weight(self.role_lookup_table, pad_idx=self.num_roles)'''
         #verb potential
         self.linear_v = nn.Linear(self.rep_size, self.encoding.n_verbs())
         #verb-role-noun potentials
