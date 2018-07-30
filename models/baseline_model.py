@@ -140,10 +140,13 @@ class resnet_modified_small(nn.Module):
 class parallel_table(nn.Module):
     def __init__(self, embedding_size, num_verbs, num_roles):
         super(parallel_table,self).__init__()
-        self.verb_lookup_table = nn.Linear(num_verbs, embedding_size)
+        self.verb_lookup_table = nn.Embedding(num_verbs, embedding_size)
         #org code has size num_role + 1 x embedding
         #how to use embeddings here? what is the gain?
-        self.role_lookup_table = nn.Linear(num_roles, embedding_size)
+        self.role_lookup_table = nn.Embedding(num_roles+1, embedding_size)
+
+        #self.verb_lookup_table.weight.clone().fill_(0)
+        #self.role_lookup_table.clone().weight.fill_(0)
 
 
     def forward(self,x):
@@ -183,6 +186,23 @@ class baseline(nn.Module):
         super(baseline, self).__init__()
         self.encoder = encoder
         self.gpu_mode = gpu_mode
+
+        self.normalize = tv.transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+
+        self.train_transform = tv.transforms.Compose([
+            tv.transforms.Scale(224),
+            tv.transforms.RandomCrop(224),
+            tv.transforms.RandomHorizontalFlip(),
+            tv.transforms.ToTensor(),
+            self.normalize,
+        ])
+
+        self.dev_transform = tv.transforms.Compose([
+            tv.transforms.Scale(224),
+            tv.transforms.CenterCrop(224),
+            tv.transforms.ToTensor(),
+            self.normalize,
+        ])
 
         #get the CNN
         if cnn_type == 'resnet152' : self.cnn = resnet152_pretrained()
@@ -227,6 +247,8 @@ class baseline(nn.Module):
                             dropout=0.5
                         )
 
+    def train_preprocess(self): return self.train_transform
+    def dev_preprocess(self): return self.dev_transform
 
     def forward(self, images, verbs, roles):
         #print('input size', images.size())
@@ -277,7 +299,7 @@ class baseline(nn.Module):
         '''
         #as per paper, loss is sum(i) sum(3) (cross_entropy(verb) + 1/6sum(all roles)cross_entropy(label)
 
-        criterion = nn.CrossEntropyLoss()
+        '''criterion = nn.CrossEntropyLoss()
 
 
         target = torch.max(gt_verbs,1)[1]
@@ -289,6 +311,26 @@ class baseline(nn.Module):
             sub_loss = 0
             for index in range(gt_labels.size()[1]):
                 sub_loss += criterion(roles_pred[i], torch.max(gt_labels[i,index,:,:],1)[1])
+            loss += sub_loss
+
+
+        final_loss = verb_loss + loss/batch_size'''
+        criterion = nn.CrossEntropyLoss(ignore_index=self.vocab_size)
+        #pred_best = torch.max(F.softmax(verb_pred, dim = -1),1)[1]
+        target = gt_verbs
+        #print('verb pred vs gt', pred_best, target)
+        verb_loss = criterion(verb_pred, target)
+        #this is a multi label classification problem
+        batch_size = verb_pred.size()[0]
+        loss = 0
+        for i in range(batch_size):
+            sub_loss = 0
+            for index in range(gt_labels.size()[1]):
+                #print('roles :', torch.max(gt_labels[i,index,:,:],1)[1])
+                '''actual_ids = utils.get_only_relevant_roles(gt_labels[i,index,:,:])
+                if self.gpu_mode >= 0:
+                    actual_ids = actual_ids.to(torch.device('cuda'))'''
+                sub_loss += criterion(roles_pred[i], gt_labels[i,index,:])
             loss += sub_loss
 
 

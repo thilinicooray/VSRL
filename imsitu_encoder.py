@@ -132,7 +132,7 @@ class imsitu_encoder():
         return len(self.verb2_role_dict[self.verb_list[verb_id]])
 
     def get_adj_matrix(self, verb_encoding):
-        verb_ids = torch.max(verb_encoding, 1)[1]
+        verb_ids = verb_encoding
         adj_matrix_list = []
 
         for id in verb_ids:
@@ -190,7 +190,7 @@ class imsitu_encoder():
             role_padding_count = self.max_role_count - len(label_id_list)
 
             for i in range(role_padding_count):
-                label_id_list.append(75000)
+                label_id_list.append(self.get_num_labels())
 
             all_frame_id_list.append(torch.tensor(label_id_list))
 

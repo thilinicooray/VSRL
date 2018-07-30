@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from . import utils
 import math
 import torch.nn.init as init
+import random
 
 from .action_graph import action_graph
 from .faster_rcnn.utils.config import cfg
@@ -25,7 +26,7 @@ class resnet_modified_small(nn.Module):
         self.dropout2d = nn.Dropout2d(.5)
         self.dropout = nn.Dropout(.5)
         self.relu = nn.LeakyReLU()
-        init.xavier_normal(self.linear.weight)
+        init.xavier_normal_(self.linear.weight)
 
         #self.conv1 = nn.Conv2d(512, 256, 3, stride=1, padding=1)
         #self.conv2 = nn.Conv2d(265, 256, 3, stride=2, padding=1)
@@ -39,7 +40,7 @@ class resnet_modified_small(nn.Module):
         self.dropout2d1 = nn.Dropout2d(.5)
         self.dropout1 = nn.Dropout(.5)
         self.relu1 = nn.LeakyReLU()
-        init.xavier_normal(self.linear1.weight)
+        init.xavier_normal_(self.linear1.weight)
 
     def base_size(self): return 512
     def segment_count(self): return 128
@@ -74,7 +75,7 @@ class baseline(nn.Module):
         self.normalize = tv.transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
         self.train_transform = tv.transforms.Compose([
-            tv.transforms.Scale(224),
+            tv.transforms.Resize(224),
             tv.transforms.RandomCrop(224),
             tv.transforms.RandomHorizontalFlip(),
             tv.transforms.ToTensor(),
@@ -82,7 +83,7 @@ class baseline(nn.Module):
         ])
 
         self.dev_transform = tv.transforms.Compose([
-            tv.transforms.Scale(224),
+            tv.transforms.Resize(224),
             tv.transforms.CenterCrop(224),
             tv.transforms.ToTensor(),
             self.normalize,
@@ -113,9 +114,9 @@ class baseline(nn.Module):
         self.graph = action_graph(self.cnn.segment_count(), self.num_graph_steps, self.gpu_mode)
 
         self.verb_module = nn.Sequential(
-            #nn.ReLU(),
+            nn.ReLU(),
             nn.Linear(self.embedding_size, self.num_verbs),
-            nn.ReLU()
+            #nn.ReLU()
         )
 
         self.verb_module.apply(utils.init_weight)
@@ -127,9 +128,9 @@ class baseline(nn.Module):
         utils.init_lstm(self.lstm)'''
 
         self.role_module = nn.Sequential(
-            #nn.ReLU(),
+            nn.ReLU(),
             nn.Linear(self.embedding_size, self.vocab_size),
-            nn.ReLU()
+            #nn.ReLU()
         )
         #self.hidden = self.init_hidden()
 
@@ -195,7 +196,7 @@ class baseline(nn.Module):
         verb_expand = vert_states[:,0].expand(self.max_role_count, vert_states.size(0),vert_states.size(-1))
         verb_expand = verb_expand.transpose(1,0)
         role_verb = torch.mul(role_embedding, verb_expand)
-        role_mul = torch.matmul(role_verb, vert_no_verb.transpose(-2, -1))#torch.mul(role_embedding, vert_state_expanded)
+        role_mul = torch.matmul(role_embedding, vert_no_verb.transpose(-2, -1))#torch.mul(role_embedding, vert_state_expanded)
         #print('cat :', role_mul[0,-1])
         role_mul = role_mul.masked_fill(role_mul == 0, -1e9)
 
@@ -203,21 +204,24 @@ class baseline(nn.Module):
         mask = self.encoder.apply_mask(roles, p_attn)
         p_attn = mask * p_attn
 
+
+
         att_weighted_role = torch.matmul(p_attn, vert_no_verb)
+        #print('attention :', att_weighted_role.size(), att_weighted_role)
         #print('check', att_weighted_role[:,-1])
         combined_role_val = att_weighted_role[:,0] * att_weighted_role[:,1] * att_weighted_role[:,2] * att_weighted_role[:,3] *att_weighted_role[:,4] *att_weighted_role[:,5]
         verb_expanded = torch.mul(vert_states[:,0], torch.sum(att_weighted_role,1))
-        verb_predict = self.verb_module(vert_states[:,0])
+        verb_predict = self.verb_module(verb_expanded)
         #verb_predict = self.verb_module(vert_states[:,0])
         '''hidden = self.init_hidden()
 
-        lstm_out, hidden = self.lstm(att_weighted_role, hidden)'''
+        lstm_out, hidden = self.lstm(att_weighted_role, hidden)
+
+        role_label_predict = self.role_module(lstm_out)'''
 
         role_label_predict = self.role_module(att_weighted_role)
 
-        #role_label_predict = self.role_module(att_weighted_role)
-
-        #print('out from forward :', verb_predict.size(), role_label_predict.size())
+        #print('out from forward :', role_label_predict)
 
         return verb_predict, role_label_predict
 
@@ -265,13 +269,14 @@ class baseline(nn.Module):
 
         final_loss = verb_loss + loss'''
 
-        criterion = nn.CrossEntropyLoss(ignore_index=75000)
+        criterion = nn.CrossEntropyLoss(ignore_index=self.vocab_size)
         pred_best = torch.max(F.softmax(verb_pred, dim = -1),1)[1]
         target = gt_verbs
         #print('verb pred vs gt', pred_best, target)
         verb_loss = criterion(verb_pred, target)
         #this is a multi label classification problem
         batch_size = verb_pred.size()[0]
+
         loss = 0
         for i in range(batch_size):
             sub_loss = 0

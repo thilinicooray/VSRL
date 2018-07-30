@@ -141,21 +141,22 @@ def main():
 
     args = parser.parse_args()
 
-    dataset_folder = 'imSitu'
-    imgset_folder = 'resized_256'
+    dataset_folder = 'imsitu_data'
+    imgset_folder = 'of500_images_resized'
 
     train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)
+    model = baseline_model.baseline(encoder, args.gpuid)
 
-    train_set = imsitu_loader(imgset_folder, train_set, encoder)
+    train_set = imsitu_loader(imgset_folder, train_set, encoder, model.train_preprocess())
 
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=64, shuffle=True, num_workers=3)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=1, shuffle=True, num_workers=3)
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
-    dev_set = imsitu_loader(imgset_folder, dev_set, encoder)
+    dev_set = imsitu_loader(imgset_folder, dev_set, encoder, model.train_preprocess())
     dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=64, shuffle=True, num_workers=3)
 
-    model = baseline_model.baseline(encoder, args.gpuid)
+
 
     if args.gpuid >= 0:
         #print('GPU enabled')
