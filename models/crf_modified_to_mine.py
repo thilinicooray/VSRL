@@ -200,6 +200,9 @@ class baseline(nn.Module):
                 for k in range(start,end):
                     linear.bias.data[k] = -100 #neg_inf
 
+    def train_preprocess(self): return self.train_transform
+    def dev_preprocess(self): return self.dev_transform
+
         #expects a list of vectors, BxD
         #returns the max index of every vector, max value of each vector and the log_sum_exp of the vector
     def log_sum_exp(self,vec):
