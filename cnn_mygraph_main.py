@@ -7,11 +7,11 @@ from models import cnn_mygraph_model
 import os
 from models import utils
 
-def train(model, train_loader, dev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, eval_frequency=1000):
+def train(model, train_loader, dev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, eval_frequency=2000):
     model.train()
     train_loss = 0
     total_steps = 0
-    print_freq = 100
+    print_freq = 200
     dev_score_list = []
 
     top1 = imsitu_scorer(encoder, 1, 3)
@@ -70,7 +70,7 @@ def train(model, train_loader, dev_loader, optimizer, scheduler, max_epoch, mode
                 top5_a = top5.get_average_results()
                 print ("{},{},{}, {} , {}, loss = {:.2f}, avg loss = {:.2f}"
                        .format(total_steps-1,epoch,i, utils.format_dict(top1_a, "{:.2f}", "1-"),
-                               utils.format_dict(top5_a,"{:.2f}","5-"), loss.data[0],
+                               utils.format_dict(top5_a,"{:.2f}","5-"), loss.item(),
                                train_loss / ((total_steps-1)%eval_frequency) ))
 
 
@@ -167,11 +167,11 @@ def main():
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder, model.train_preprocess())
 
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=32, shuffle=True, num_workers=0)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=16, shuffle=True, num_workers=0)
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder, model.train_preprocess())
-    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=32, shuffle=True, num_workers=4)
+    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=16, shuffle=True, num_workers=4)
 
 
 
