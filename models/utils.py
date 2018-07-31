@@ -20,8 +20,9 @@ def init_weight(linear, pad_idx=None):
     if isinstance(linear, nn.Linear):
         init.xavier_normal_(linear.weight)
     if isinstance(linear, nn.Embedding):
-        linear.weight.clone().fill_(0)
-        #linear.weight.data[pad_idx] = 0
+        bias = np.sqrt(3.0 / linear.weight.size(1))
+        nn.init.uniform(linear.weight, -bias, bias)
+        linear.weight.data[pad_idx] = 0
 
 def init_gru_cell(input):
 

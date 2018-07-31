@@ -12,8 +12,8 @@ class action_graph(nn.Module):
 
         self.num_regions = num_regions
         self.num_steps = num_steps
-        self.vert_state_dim = 512
-        self.edge_state_dim = 512
+        self.vert_state_dim = 1024
+        self.edge_state_dim = 1024
         self.gpu_mode= gpu_mode
 
         self.vert_gru = nn.GRUCell(self.vert_state_dim, self.vert_state_dim)
@@ -36,12 +36,14 @@ class action_graph(nn.Module):
             nn.LogSoftmax()
         )
 
+        self.out = nn.Linear(self.vert_state_dim, self.vert_state_dim)
+        self.m = nn.Tanh()
+
         '''self.edge_att.apply(utils.init_weight)#actually pytorch init does reset param
         self.vert_att.apply(utils.init_weight)'''
 
 
     def forward(self, input_):
-
         #init hidden state with xavier
         vert_state = torch.zeros(input_[0].size(1), self.vert_state_dim)
         edge_state = torch.zeros(input_[1].size(1), self.edge_state_dim)
@@ -64,17 +66,22 @@ class action_graph(nn.Module):
             edge_state = self.edge_gru(edge_input[i], edge_state)
 
             #todo: check whether this way is correct, TF code uses a separate global var to keep hidden state
-            for i in range(self.num_steps):
+            for j in range(self.num_steps):
                 edge_context = self.get_edge_context(edge_state, vert_state)
                 vert_context = self.get_vert_context(vert_state, edge_state)
 
                 edge_state = self.edge_gru(edge_context, edge_state)
                 vert_state = self.vert_gru(vert_context, vert_state)
 
-            vert_state_list.append(vert_state)
-            edge_state_list.append(edge_state)
+            vert_edge = vert_state[1:].clone() * edge_state.clone()
+            full_vert = torch.cat((torch.unsqueeze(vert_state[0],0), vert_edge),0)
+            final = torch.unsqueeze(self.m(self.out(full_vert)),0)
 
-        return torch.stack(vert_state_list), torch.stack(edge_state_list)
+            if i == 0:
+                vert_state_batch = final
+            else:
+                vert_state_batch = torch.cat((vert_state_batch.clone(), final), 0)
+        return vert_state_batch
 
     def get_edge_context(self, edge_state, vert_state):
         #todo: implement for undirectional, not only have verb-> region direction.

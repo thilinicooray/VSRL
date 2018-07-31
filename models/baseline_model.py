@@ -145,8 +145,8 @@ class parallel_table(nn.Module):
         #how to use embeddings here? what is the gain?
         self.role_lookup_table = nn.Embedding(num_roles+1, embedding_size)
 
-        #self.verb_lookup_table.weight.clone().fill_(0)
-        #self.role_lookup_table.clone().weight.fill_(0)
+        self.verb_lookup_table.weight.clone().fill_(0)
+        self.role_lookup_table.clone().weight.fill_(0)
 
 
     def forward(self,x):
