@@ -72,7 +72,7 @@ class resnet_modified_small1(nn.Module):
         super(resnet_modified_small1, self).__init__()
         self.resnet = tv.models.resnet34(pretrained=True)
         #probably want linear, relu, dropout
-        self.linear = nn.Linear(7*7*512, 512)
+        self.linear = nn.Linear(7*7*512, 1024)
         self.dropout2d = nn.Dropout2d(.5)
         self.dropout = nn.Dropout(.5)
         self.relu = nn.LeakyReLU()
