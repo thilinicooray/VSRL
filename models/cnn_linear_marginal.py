@@ -257,13 +257,13 @@ class baseline(nn.Module):
         label_marginal_sum = torch.unsqueeze(label_marginal_sum,1)
         label_marginal_sum_expanded = label_marginal_sum.expand_as(verb_predict)
 
-        v_marginal = label_marginal_sum_expanded + verb_predict
+        #v_marginal = label_marginal_sum_expanded + verb_predict
 
-        _, _ , norm  = self.log_sum_exp(v_marginal)
+        _, _ , norm  = self.log_sum_exp(verb_predict)
 
         #print('out from forward :', role_label_predict.size())
 
-        return verb_predict, role_label_predict, norm, v_marginal, role_label_maxi
+        return verb_predict, role_label_predict, norm, verb_predict, role_label_maxi
 
         #computes log( (1 - exp(x)) * (1 - exp(y)) ) =  1 - exp(y) - exp(x) + exp(y)*exp(x) = 1 - exp(V), so V=  log(exp(y) + exp(x) - exp(x)*exp(y))
     #returns the the log of V
