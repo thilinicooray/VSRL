@@ -357,7 +357,7 @@ class baseline(nn.Module):
         for i in range(batch_size):
             for index in range(gt_labels.size()[1]):
                 frame_loss = 0
-                verb_loss = utils.cross_entropy_loss(verb_pred[i],gt_verbs[i])
+                verb_loss = utils.cross_entropy_loss(verb_pred[i],gt_verbs[i],-1)
                 for j in range(0, self.encoder.get_max_role_count()):
                     if j == 0:
                         frame_loss += utils.cross_entropy_loss(role_label_pred[i][start_idx[j]:end_idx[j]], gt_labels[i,index,j], len(self.encoder.role2_label['agent']))
