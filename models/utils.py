@@ -118,3 +118,11 @@ def cross_entropy_loss(pred, target, ignore_index=None):
     #print('loss ', loss)
     return loss
 
+def likelihood(pred, target, ignore_index=None):
+    if target == ignore_index:
+        #print('no loss')
+        return 0
+    likelihood = pred[target]
+
+    return likelihood
+

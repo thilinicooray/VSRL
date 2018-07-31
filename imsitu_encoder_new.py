@@ -19,7 +19,7 @@ class imsitu_encoder():
         self.max_role_count = 0
         self.role2_label = {}
         self.main_roles = ['agent', 'place', 'tool', 'item']
-        self.role_cat = ['agent', 'place', 'tool', 'item', 'other']
+        self.role_cat = ['agent', 'place', 'tool', 'item', 'other', 'other', 'other']
 
         for img_id in train_set:
             img = train_set[img_id]

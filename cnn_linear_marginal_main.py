@@ -1,9 +1,9 @@
 import torch
 from imsitu_encoder_new import imsitu_encoder
 from imsitu_loader import imsitu_loader
-from imsitu_scorer_updated import imsitu_scorer
+from cnn_linear_marginal_scorer import imsitu_scorer
 import json
-from models import cnn_graph_baseline_new
+from models import cnn_linear_marginal
 import os
 from models import utils
 
@@ -44,10 +44,9 @@ def train(model, train_loader, dev_loader, optimizer, scheduler, max_epoch, mode
 
             optimizer.zero_grad()
 
-            verb_predict, role_predict = model(img, verb, roles)
+            verb_predict, role_predict, norm, verb_marginal, best_role_ids = model(img, verb, roles)
 
-            loss = model.calculate_loss(verb_predict, verb, role_predict, labels)
-            #print('current loss = ', loss)
+            loss = model.calculate_loss(verb_predict, verb, norm, role_predict, labels)
 
             loss.backward()
             optimizer.step()
@@ -59,10 +58,10 @@ def train(model, train_loader, dev_loader, optimizer, scheduler, max_epoch, mode
                 print('grad is')
                 print(f.grad)'''
 
-            train_loss += loss.data.item()
+            train_loss += loss.item()
 
-            top1.add_point(verb_predict, verb, role_predict, labels, roles)
-            top5.add_point(verb_predict, verb, role_predict, labels, roles)
+            top1.add_point(verb_marginal, verb, best_role_ids, labels, roles)
+            top5.add_point(verb_marginal, verb, best_role_ids, labels, roles)
 
 
             if total_steps % print_freq == 0:
@@ -70,7 +69,7 @@ def train(model, train_loader, dev_loader, optimizer, scheduler, max_epoch, mode
                 top5_a = top5.get_average_results()
                 print ("{},{},{}, {} , {}, loss = {:.2f}, avg loss = {:.2f}"
                        .format(total_steps-1,epoch,i, utils.format_dict(top1_a, "{:.2f}", "1-"),
-                               utils.format_dict(top5_a,"{:.2f}","5-"), loss.data[0],
+                               utils.format_dict(top5_a,"{:.2f}","5-"), loss.item(),
                                train_loss / ((total_steps-1)%eval_frequency) ))
 
 
@@ -139,11 +138,11 @@ def eval(model, dev_loader, encoder, gpu_mode):
                 roles = torch.autograd.Variable(roles)
                 labels = torch.autograd.Variable(labels)
 
-            verb_predict, role_predict = model(img, verb, roles)
-            loss = model.calculate_loss(verb_predict, verb, role_predict, labels)
-            val_loss += loss.data[0]
-            top1.add_point(verb_predict, verb, role_predict, labels, roles)
-            top5.add_point(verb_predict, verb, role_predict, labels, roles)
+            verb_predict, role_predict, norm, verb_marginal, best_role_ids = model(img, verb, roles)
+            loss = model.calculate_loss(verb_predict, verb, norm, role_predict, labels)
+            val_loss += loss.item()
+            top1.add_point(verb_marginal, verb, best_role_ids, labels, roles)
+            top5.add_point(verb_marginal, verb, best_role_ids, labels, roles)
 
             del verb_predict, role_predict, img, verb, roles, labels, loss
 
@@ -163,7 +162,7 @@ def main():
     train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)
 
-    model = cnn_graph_baseline_new.baseline(encoder, args.gpuid)
+    model = cnn_linear_marginal.baseline(encoder, args.gpuid)
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder, model.train_preprocess())
 
