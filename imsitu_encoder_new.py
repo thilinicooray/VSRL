@@ -103,6 +103,8 @@ class imsitu_encoder():
                 self.role_start_idx.append(self.role_end_idx[-1])
                 self.role_end_idx.append(self.role_end_idx[-1] + len(self.role2_label['other']))
 
+        self.verb2role_encoding = self.get_verb2role_encoding()
+
         print('train set stats: \n\t verb count:', len(self.verb_list), '\n\t role count:',len(self.role_list),
               '\n\t label count:', len(self.label_list) ,
               '\n\t max role count:', self.max_role_count)
@@ -120,6 +122,32 @@ class imsitu_encoder():
         (pd.DataFrame.from_dict(data=d_sorted_by_value, orient='index')
          .to_csv(filename+'.csv', header=False))
 
+    def get_verb2role_encoding(self):
+        verb2role_embedding_list = []
+
+        for verb_id in range(len(self.verb_list)):
+            current_role_list = self.verb2_role_dict[self.verb_list[verb_id]]
+
+            role_embedding_verb = []
+            for element in self.main_roles:
+                if element in current_role_list:
+                    role_embedding_verb.append(1)
+                else:
+                    role_embedding_verb.append(0)
+
+            for role in current_role_list:
+                if not role in self.main_roles:
+                    role_embedding_verb.append(1)
+
+
+            padding_count = self.max_role_count - len(role_embedding_verb)
+
+            for i in range(padding_count):
+                role_embedding_verb.append(0)
+
+            verb2role_embedding_list.append(torch.tensor(role_embedding_verb))
+
+        return verb2role_embedding_list
 
     def encode(self, item):
         verb = self.verb_list.index(item['verb'])
@@ -169,17 +197,18 @@ class imsitu_encoder():
     def get_role_count(self, verb_id):
         return len(self.verb2_role_dict[self.verb_list[verb_id]])
 
-    def get_adj_matrix(self, verb_encoding):
-        verb_ids = verb_encoding
+    def get_adj_matrix(self, verb_ids):
         adj_matrix_list = []
 
         for id in verb_ids:
-            adj = torch.zeros([self.max_role_count, self.max_role_count])
-            actual_verb_count = self.get_role_count(id)
-            adj[:actual_verb_count, : actual_verb_count] = 1
+            encoding = self.verb2role_encoding[id]
+            encoding_tensor = torch.unsqueeze(torch.tensor(encoding),0)
+            expanded = encoding_tensor.expand(self.max_role_count, encoding_tensor.size(1))
+            transpose = torch.t(expanded)
+            adj = expanded*transpose
             adj_matrix_list.append(adj)
 
-        return torch.stack(adj_matrix_list)
+        return torch.stack(adj_matrix_list).type(torch.FloatTensor)
 
     def apply_mask(self, roles, val):
         mask = val.clone().fill_(1)
