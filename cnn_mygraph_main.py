@@ -7,11 +7,11 @@ from models import cnn_mygraph_model
 import os
 from models import utils
 
-def train(model, train_loader, dev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, eval_frequency=500):
+def train(model, train_loader, dev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, eval_frequency=2000):
     model.train()
     train_loss = 0
     total_steps = 0
-    print_freq = 50
+    print_freq = 200
     dev_score_list = []
 
     top1 = imsitu_scorer(encoder, 1, 3)
