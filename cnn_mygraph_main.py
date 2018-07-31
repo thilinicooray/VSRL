@@ -7,11 +7,11 @@ from models import cnn_mygraph_model
 import os
 from models import utils
 
-def train(model, train_loader, dev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, eval_frequency=2000):
+def train(model, train_loader, dev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, eval_frequency=1000):
     model.train()
     train_loss = 0
     total_steps = 0
-    print_freq = 200
+    print_freq = 100
     dev_score_list = []
 
     top1 = imsitu_scorer(encoder, 1, 3)
@@ -141,7 +141,7 @@ def eval(model, dev_loader, encoder, gpu_mode):
 
             verb_predict, role_predict = model(img, verb, roles)
             loss = model.calculate_loss(verb_predict, verb, role_predict, labels)
-            val_loss += loss.data[0]
+            val_loss += loss.item()
             top1.add_point(verb_predict, verb, role_predict, labels, roles)
             top5.add_point(verb_predict, verb, role_predict, labels, roles)
 
@@ -167,11 +167,11 @@ def main():
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder, model.train_preprocess())
 
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=16, shuffle=True, num_workers=0)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=32, shuffle=True, num_workers=0)
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder, model.train_preprocess())
-    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=16, shuffle=True, num_workers=4)
+    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=32, shuffle=True, num_workers=4)
 
 
 
