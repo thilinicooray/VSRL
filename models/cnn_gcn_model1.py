@@ -132,7 +132,7 @@ class parallel_table(nn.Module):
         self.verb_lookup_table = nn.Embedding(num_verbs, embedding_size)
         #org code has size num_role + 1 x embedding
         #how to use embeddings here? what is the gain?
-        self.role_lookup_table = nn.Embedding(num_roles+1, embedding_size, padding_idx=self.num_roles)
+        self.role_lookup_table = nn.Embedding(num_roles+1, embedding_size, padding_idx=num_roles)
 
         self.verb_lookup_table.weight.clone().fill_(0)
         self.role_lookup_table.weight.clone().fill_(0)
