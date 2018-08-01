@@ -255,7 +255,7 @@ class baseline(nn.Module):
         #print('check :', vert_states.size(), vert_no_verb.size(), role_embedding.size())
         verb_expand = verb_embedding.expand(self.max_role_count, verb_embedding.size(0),verb_embedding.size(-1))
         verb_expand = verb_expand.transpose(1,0)
-        role_verb = verb_expand * role_embedding
+        role_verb = torch.mul(verb_expand, role_embedding)
         role_mul = torch.matmul(role_verb, vert_no_verb.transpose(-2, -1))#torch.mul(role_embedding, vert_state_expanded)
         #print('cat :', role_mul[0,-1])
         role_mul = role_mul.masked_fill(role_mul == 0, -1e9)
