@@ -294,7 +294,7 @@ class baseline(nn.Module):
     def calculate_loss(self, verb_pred, gt_verbs, role_label_pred, gt_labels):
         verb_criterion = nn.CrossEntropyLoss()
         target = gt_verbs
-        verb_loss = verb_criterion(verb_pred, target)
+        #verb_loss = verb_criterion(verb_pred, target)
         batch_size = verb_pred.size()[0]
         loss = 0
         start_idx = self.encoder.role_start_idx
@@ -302,6 +302,7 @@ class baseline(nn.Module):
         for i in range(batch_size):
             for index in range(gt_labels.size()[1]):
                 frame_loss = 0
+                verb_loss = utils.cross_entropy_loss(verb_pred[i], gt_verbs[i])
                 for j in range(0, self.encoder.get_max_role_count()):
                     if j == 0:
                         frame_loss += utils.cross_entropy_loss(role_label_pred[i][start_idx[j]:end_idx[j]], gt_labels[i,index,j], len(self.encoder.role2_label['agent']))
@@ -314,10 +315,10 @@ class baseline(nn.Module):
                     else:
                         frame_loss += utils.cross_entropy_loss(role_label_pred[i][start_idx[j]:end_idx[j]], gt_labels[i,index,j], len(self.encoder.role2_label['other']))
 
-                loss += frame_loss/len(self.encoder.verb2_role_dict[self.encoder.verb_list[gt_verbs[i]]])
+                loss += (verb_loss + frame_loss/len(self.encoder.verb2_role_dict[self.encoder.verb_list[gt_verbs[i]]]))
 
 
-        final_loss = verb_loss + loss/batch_size
+        final_loss = loss/batch_size
         #print('loss :', final_loss)
         return final_loss
 

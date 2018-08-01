@@ -110,7 +110,7 @@ def format_dict(d, s, p):
 
 def cross_entropy_loss(pred, target, ignore_index=None):
     #-x[class] + log (sum_j exp(x[j]))
-    if target == ignore_index:
+    if ignore_index is not None and target == ignore_index:
         #print('no loss')
         return 0
     _x_class = - pred[target]
