@@ -236,6 +236,8 @@ class baseline(nn.Module):
         self.verb_lookup_table.weight.clone().fill_(0)
         self.role_lookup_table.weight.clone().fill_(0)
 
+        self.relu = nn.ReLU()
+
         #nhid and dropout, user arg
         #in GCN, they don't define #of nodes in init. they pass an adj matrix in forward.
         self.role_graph = gcn.GCN(
@@ -324,7 +326,7 @@ class baseline(nn.Module):
             adj_matrx = torch.autograd.Variable(adj_matrx.cuda())
         else:
             adj_matrx = torch.autograd.Variable(adj_matrx)
-        role_predict = self.role_graph(nn.ReLU(att_weighted_role), adj_matrx)
+        role_predict = self.role_graph(self.relu(att_weighted_role), adj_matrx)
 
 
 
