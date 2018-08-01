@@ -240,12 +240,14 @@ class baseline(nn.Module):
 
         verb_predict = self.verb_module(vert_states[:,0])
         roles = roles.type(torch.LongTensor)
+        verbs = verbs.type(torch.LongTensor)
 
         if self.gpu_mode >= 0:
             roles = roles.to(torch.device('cuda'))
+            verbs = verbs.to(torch.device('cuda'))
 
         role_embedding = self.role_lookup_table(roles)
-        verb_embedding = self.role_lookup_table(verbs.type(torch.LongTensor))
+        verb_embedding = self.role_lookup_table(verbs)
         #mask = self.encoder.
         #print('role embedding', role_embedding[0][3])
 
