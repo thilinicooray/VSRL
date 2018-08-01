@@ -22,7 +22,8 @@ def init_weight(linear, pad_idx=None):
     if isinstance(linear, nn.Embedding):
         bias = np.sqrt(3.0 / linear.weight.size(1))
         nn.init.uniform_(linear.weight, -bias, bias)
-        linear.weight.data[pad_idx] = 0
+        if pad_idx is not None:
+            linear.weight.data[pad_idx] = 0
 
 def init_gru_cell(input):
 

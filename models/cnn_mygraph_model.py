@@ -185,12 +185,18 @@ class baseline(nn.Module):
         )
         self.verb_module.apply(utils.init_weight)
 
+        self.verb_lookup_table = nn.Embedding(self.num_verbs, self.embedding_size)
+        utils.init_weight(self.verb_lookup_table)
+
         self.role_lookup_table = nn.Embedding(self.num_roles + 1, self.embedding_size, padding_idx=self.num_roles)
         utils.init_weight(self.role_lookup_table, pad_idx=self.num_roles)
 
+        self.lstm = nn.LSTM(self.embedding_size, self.embedding_size, num_layers=2, bidirectional=True)
+        utils.init_lstm(self.lstm)
+
 
         self.role_module = nn.ModuleList([
-            nn.Sequential(nn.Linear(self.embedding_size, self.embedding_size), nn.ReLU(), nn.Dropout(.5),
+            nn.Sequential(nn.Linear(self.embedding_size*2, self.embedding_size), nn.ReLU(), nn.Dropout(.5),
                           nn.Linear(self.embedding_size, len(self.encoder.role2_label[role_cat])))
             for role_cat in self.encoder.role_cat])
 
@@ -199,6 +205,19 @@ class baseline(nn.Module):
 
     def train_preprocess(self): return self.train_transform
     def dev_preprocess(self): return self.dev_transform
+
+    def init_hidden(self):
+        # Before we've done anything, we dont have any hidden state.
+        # Refer to the Pytorch documentation to see exactly
+        # why they have this dimensionality.
+        # The axes semantics are (num_layers * num_directions, minibatch_size, hidden_dim)
+        tensor = torch.zeros(4, self.max_role_count, self.embedding_size)
+        tensor1 = torch.zeros(4, self.max_role_count, self.embedding_size)
+        if self.gpu_mode >= 0:
+            tensor = tensor.to(torch.device('cuda'))
+            tensor1 = tensor1.to(torch.device('cuda'))
+        return (torch.autograd.Variable(tensor),
+                torch.autograd.Variable(tensor1))
 
 
 
@@ -226,14 +245,15 @@ class baseline(nn.Module):
             roles = roles.to(torch.device('cuda'))
 
         role_embedding = self.role_lookup_table(roles)
+        verb_embedding = self.role_lookup_table(verbs.type(torch.LongTensor))
         #mask = self.encoder.
         #print('role embedding', role_embedding[0][3])
 
         vert_no_verb = vert_states[:,1:]
         #print('check :', vert_states.size(), vert_no_verb.size(), role_embedding.size())
-        verb_expand = vert_states[:,0].expand(self.max_role_count, vert_states.size(0),vert_states.size(-1))
+        verb_expand = verb_embedding.expand(self.max_role_count, verb_embedding.size(0),verb_embedding.size(-1))
         verb_expand = verb_expand.transpose(1,0)
-        role_verb = torch.mul(role_embedding, verb_expand)
+        role_verb = verb_expand * role_embedding
         role_mul = torch.matmul(role_verb, vert_no_verb.transpose(-2, -1))#torch.mul(role_embedding, vert_state_expanded)
         #print('cat :', role_mul[0,-1])
         role_mul = role_mul.masked_fill(role_mul == 0, -1e9)
@@ -244,12 +264,16 @@ class baseline(nn.Module):
 
         att_weighted_role = torch.matmul(p_attn, vert_no_verb)
 
+        hidden = self.init_hidden()
+
+        lstm_out, hidden = self.lstm(att_weighted_role, hidden)
+
 
         for i,module in enumerate(self.role_module):
             if i == 0:
-                role_label_predict = module(att_weighted_role[:,i])
+                role_label_predict = module(lstm_out[:,i])
             else:
-                role_label_predict = torch.cat((role_label_predict.clone(), module(att_weighted_role[:,i])), 1)
+                role_label_predict = torch.cat((role_label_predict.clone(), module(lstm_out[:,i])), 1)
 
         #print('out from forward :', role_label_predict.size())
 
