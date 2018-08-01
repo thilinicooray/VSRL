@@ -11,7 +11,7 @@ def train(model, train_loader, dev_loader, optimizer, scheduler, max_epoch, mode
     model.train()
     train_loss = 0
     total_steps = 0
-    print_freq = 100
+    print_freq = 200
     dev_score_list = []
 
     top1 = imsitu_scorer(encoder, 1, 3)
@@ -167,7 +167,7 @@ def main():
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder, model.train_preprocess())
 
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=32, shuffle=True, num_workers=0)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=16, shuffle=True, num_workers=0)
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder, model.train_preprocess())
