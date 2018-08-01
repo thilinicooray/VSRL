@@ -186,10 +186,13 @@ class baseline(nn.Module):
         self.verb_module.apply(utils.init_weight)
 
         self.verb_lookup_table = nn.Embedding(self.num_verbs, self.embedding_size)
-        utils.init_weight(self.verb_lookup_table)
+        #utils.init_weight(self.verb_lookup_table)
 
         self.role_lookup_table = nn.Embedding(self.num_roles + 1, self.embedding_size, padding_idx=self.num_roles)
-        utils.init_weight(self.role_lookup_table, pad_idx=self.num_roles)
+        #utils.init_weight(self.role_lookup_table, pad_idx=self.num_roles)
+
+        self.verb_lookup_table.weight.clone().fill_(0)
+        self.role_lookup_table.weight.clone().fill_(0)
 
         self.lstm = nn.LSTM(self.embedding_size, self.embedding_size, num_layers=2, bidirectional=True)
         utils.init_lstm(self.lstm)
