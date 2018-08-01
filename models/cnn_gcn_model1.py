@@ -216,7 +216,7 @@ class baseline(nn.Module):
             nn.Linear(self.embedding_size, self.embedding_size),
             nn.ReLU(),
             nn.Dropout(0.5),
-            nn.Linear(self.embedding_size, self.self.num_verbs)
+            nn.Linear(self.embedding_size, self.num_verbs)
         )
 
         self.verb_module.apply(utils.init_weight)
