@@ -3,7 +3,7 @@ from imsitu_encoder_new import imsitu_encoder
 from imsitu_loader import imsitu_loader
 from imsitu_scorer_updated import imsitu_scorer
 import json
-from models import cnn_mygraph_model
+from models import cnn_mine_gcn
 import os
 from models import utils
 
@@ -163,7 +163,7 @@ def main():
     train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)
 
-    model = cnn_mygraph_model.baseline(encoder, args.gpuid)
+    model = cnn_mine_gcn.baseline(encoder, args.gpuid)
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder, model.train_preprocess())
 
