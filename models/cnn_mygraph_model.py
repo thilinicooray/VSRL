@@ -215,7 +215,7 @@ class baseline(nn.Module):
 
         vert_states = self.graph((vert_init,edge_init))
 
-
+        verb_predict = self.verb_module(vert_states[:,0])
         roles = roles.type(torch.LongTensor)
 
         if self.gpu_mode >= 0:
@@ -227,7 +227,10 @@ class baseline(nn.Module):
 
         vert_no_verb = vert_states[:,1:]
         #print('check :', vert_states.size(), vert_no_verb.size(), role_embedding.size())
-        role_mul = torch.matmul(role_embedding, vert_no_verb.transpose(-2, -1))#torch.mul(role_embedding, vert_state_expanded)
+        verb_expand = vert_states[:,0].expand(self.max_role_count, vert_states.size(0),vert_states.size(-1))
+        verb_expand = verb_expand.transpose(1,0)
+        role_verb = torch.mul(role_embedding, verb_expand)
+        role_mul = torch.matmul(role_verb, vert_no_verb.transpose(-2, -1))#torch.mul(role_embedding, vert_state_expanded)
         #print('cat :', role_mul[0,-1])
         role_mul = role_mul.masked_fill(role_mul == 0, -1e9)
 
@@ -236,7 +239,7 @@ class baseline(nn.Module):
         p_attn = mask * p_attn
 
         att_weighted_role = torch.matmul(p_attn, vert_no_verb)
-        verb_predict = self.verb_module(vert_states[:,0])
+
 
         for i,module in enumerate(self.role_module):
             if i == 0:

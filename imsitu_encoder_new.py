@@ -231,8 +231,10 @@ class imsitu_encoder():
         role_id = []
         main_role_ids = []
         for element in self.main_roles:
-            main_role_ids.append(self.role_list.index(element))
-        role_id = main_role_ids
+            if element in roles:
+                role_id.append(self.role_list.index(element))
+            else:
+                role_id.append(190)
         #print('role is list', len(main_role_ids))
 
         for role in roles:
