@@ -7,7 +7,7 @@ from models import cnn_gcn_model1
 import os
 from models import utils
 
-def train(model, train_loader, dev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, eval_frequency=500):
+def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, eval_frequency=500):
     model.train()
     train_loss = 0
     total_steps = 0
@@ -98,6 +98,22 @@ def train(model, train_loader, dev_loader, optimizer, scheduler, max_epoch, mode
                     utils.save_net(checkpoint_name, model)
                     print ('New best model saved! {0}'.format(max_score))
 
+                #eval on the trainset
+
+                top1, top5, val_loss = eval(model, traindev_loader, encoder, gpu_mode)
+                model.train()
+
+                top1_avg = top1.get_average_results()
+                top5_avg = top5.get_average_results()
+
+                avg_score = top1_avg["verb"] + top1_avg["value"] + top1_avg["value-all"] + top5_avg["verb"] + \
+                            top5_avg["value"] + top5_avg["value-all"] + top5_avg["value*"] + top5_avg["value-all*"]
+                avg_score /= 8
+
+                print ('TRAINDEV {} average :{:.2f} {} {}'.format(total_steps-1, avg_score*100,
+                                                             utils.format_dict(top1_avg,'{:.2f}', '1-'),
+                                                             utils.format_dict(top5_avg, '{:.2f}', '5-')))
+
                 print('current train loss', train_loss)
                 train_loss = 0
                 top1 = imsitu_scorer(encoder, 1, 3)
@@ -119,7 +135,7 @@ def eval(model, dev_loader, encoder, gpu_mode):
     with torch.no_grad():
         mx = len(dev_loader)
         for i, (img, verb, roles,labels) in enumerate(dev_loader):
-            #print("{}/{} batches\r".format(i+1,mx)) ,
+            print("{}/{} batches\r".format(i+1,mx)) ,
             '''im_data = torch.squeeze(im_data,0)
             im_info = torch.squeeze(im_info,0)
             gt_boxes = torch.squeeze(gt_boxes,0)
@@ -173,6 +189,10 @@ def main():
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder, model.train_preprocess())
     dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=64, shuffle=True, num_workers=4)
 
+    traindev_set = json.load(open(dataset_folder +"/train_eval.json"))
+    traindev_set = imsitu_loader(imgset_folder, traindev_set, encoder, model.train_preprocess())
+    traindev_loader = torch.utils.data.DataLoader(traindev_set, batch_size=64, shuffle=True, num_workers=4)
+
 
 
     if args.gpuid >= 0:
@@ -190,7 +210,7 @@ def main():
             #gradient clipping, grad check
 
             print('Model training started!')
-            train(model, train_loader, dev_loader, optimizer, scheduler, 200, 'trained_models', encoder, args.gpuid)
+            train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, 200, 'trained_models', encoder, args.gpuid)
 
 
 
