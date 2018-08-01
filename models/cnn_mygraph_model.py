@@ -178,9 +178,10 @@ class baseline(nn.Module):
         self.graph = action_graph(self.cnn.segment_count(), self.num_graph_steps, self.gpu_mode)
 
         self.verb_module = nn.Sequential(
+            nn.Linear(self.embedding_size, self.embedding_size),
             nn.ReLU(),
-            nn.Linear(self.embedding_size, self.num_verbs),
-            #nn.ReLU()
+            nn.Dropout(0.5),
+            nn.Linear(self.embedding_size, self.self.num_verbs)
         )
         self.verb_module.apply(utils.init_weight)
 
@@ -188,7 +189,10 @@ class baseline(nn.Module):
         utils.init_weight(self.role_lookup_table, pad_idx=self.num_roles)
 
 
-        self.role_module = nn.ModuleList([ nn.Linear(self.embedding_size, len(self.encoder.role2_label[role_cat])) for role_cat in self.encoder.role_cat])
+        self.role_module = nn.ModuleList([
+            nn.Sequential(nn.Linear(self.embedding_size, self.embedding_size), nn.ReLU(), nn.Dropout(.5),
+                          nn.Linear(self.embedding_size, len(self.encoder.role2_label[role_cat])))
+            for role_cat in self.encoder.role_cat])
 
 
         self.role_module.apply(utils.init_weight)
