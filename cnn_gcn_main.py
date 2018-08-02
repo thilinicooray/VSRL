@@ -50,6 +50,15 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             #print('current loss = ', loss)
 
             loss.backward()
+
+
+            '''for param in filter(lambda p: p.requires_grad,model.parameters()):
+                print(param.grad.data.sum())
+
+            # start debugger
+            import pdb; pdb.set_trace()'''
+
+
             optimizer.step()
 
             '''print('grad check :')
@@ -205,7 +214,7 @@ def main():
         for decay in decay_set:
             #lr, weight decay user param
             print('CURRENT PARAM SET : lr, decay :' , lr, decay)
-            optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad,model.parameters()), lr=lr, weight_decay=decay)
+            optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=decay)
             scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
             #gradient clipping, grad check
 
