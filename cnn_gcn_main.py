@@ -7,9 +7,9 @@ from models import cnn_gcn_model1
 import os
 from models import utils
 #from torchviz import make_dot
-from graphviz import Digraph
+#from graphviz import Digraph
 
-def make_dot(var, params):
+'''def make_dot(var, params):
     """ Produces Graphviz representation of PyTorch autograd graph
 
     Blue nodes are the Variables that require grad, orange are Tensors
@@ -56,7 +56,7 @@ def make_dot(var, params):
                     dot.edge(str(id(t)), str(id(var)))
                     add_nodes(t)
     add_nodes(var.grad_fn)
-    return dot
+    return dot'''
 
 def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, eval_frequency=500):
     model.train()
